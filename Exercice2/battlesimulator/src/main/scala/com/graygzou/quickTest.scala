@@ -20,3 +20,4 @@ object quickTest extends App
   }
   test(20)
 }
+
