@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.jmonkeyengine:jme3-core:3.2.0-stable">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jmonkeyengine/jme3-core/3.2.0-stable/jme3-core-3.2.0-stable.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jmonkeyengine/jme3-core/3.2.0-stable/jme3-core-3.2.0-stable-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jmonkeyengine/jme3-core/3.2.0-stable/jme3-core-3.2.0-stable-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

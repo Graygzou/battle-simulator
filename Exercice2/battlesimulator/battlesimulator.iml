@@ -10,6 +10,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="scala-sdk-2.11.8" level="application" />
+    <orderEntry type="library" name="scala-sdk-2.11.8" level="application" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-core_2.11:2.2.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.avro:avro:1.7.7" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.13" level="project" />
@@ -167,6 +169,17 @@
     <orderEntry type="library" name="Maven: org.apache.parquet:parquet-hadoop:1.8.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.parquet:parquet-format:2.3.0-incubating" level="project" />
     <orderEntry type="library" name="Maven: org.apache.parquet:parquet-jackson:1.8.1" level="project" />
-    <orderEntry type="library" name="scala-sdk-2.11.8" level="application" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-core:3.2.0-stable" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.jmonkeyengine:jme3-desktop:3.2.0-stable" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-lwjgl:3.2.0-stable" level="project" />
+    <orderEntry type="library" name="Maven: org.lwjgl.lwjgl:lwjgl:2.9.3" level="project" />
+    <orderEntry type="library" name="Maven: org.lwjgl.lwjgl:lwjgl-platform:natives-windows:2.9.3" level="project" />
+    <orderEntry type="library" name="Maven: org.lwjgl.lwjgl:lwjgl-platform:natives-linux:2.9.3" level="project" />
+    <orderEntry type="library" name="Maven: org.lwjgl.lwjgl:lwjgl-platform:natives-osx:2.9.3" level="project" />
+    <orderEntry type="library" name="Maven: net.java.jinput:jinput:2.0.5" level="project" />
+    <orderEntry type="library" name="Maven: net.java.jutils:jutils:1.0.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: net.java.jinput:jinput-platform:natives-linux:2.0.5" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: net.java.jinput:jinput-platform:natives-windows:2.0.5" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: net.java.jinput:jinput-platform:natives-osx:2.0.5" level="project" />
   </component>
 </module>

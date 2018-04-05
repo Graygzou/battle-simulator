@@ -1,4 +1,8 @@
-package com.graygzou
+/**
+  * @author Grégoire Boiron <gregoire.boiron@gmail.com>
+  */
+
+package com.graygzou.Creatures
 
 object TestEntity {
   def main(args: Array[String]){
