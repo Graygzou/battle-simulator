@@ -7,6 +7,16 @@
 
 package com.graygzou.Creatures
 
+/**
+  *
+  * Hint : We do not used case classes for representing entities because those are not immutable data
+  * (they will take damages, move around and maybe die).
+  * @param name
+  * @param health
+  * @param armor
+  * @param strength
+  * @param regeneration
+  */
 class Entity(name: String, health: Double, armor : Double, strength: Double, regeneration: Double ) { //position: Vector3f
 
   // Basic constructor
