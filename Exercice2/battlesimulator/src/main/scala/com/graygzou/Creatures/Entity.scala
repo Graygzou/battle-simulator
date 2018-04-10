@@ -8,6 +8,8 @@
 
 package com.graygzou.Creatures
 
+import com.graygzou.Team
+
 /**
   *
   * Hint : We do not used case classes for representing entities because those are not immutable data
@@ -16,7 +18,7 @@ package com.graygzou.Creatures
 class Entity(args: Array[String]) extends Serializable { //position: Vector3f
 
   // Set the entity team to a dummy value.
-  var ownTeam = 0;
+  var ownTeam = Team(0);
   var ownPosition = 0;
 
   // Basic members fields.
@@ -24,13 +26,13 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
   var ownHealth = 0.0
   var ownArmor = 0.0
   var ownMeleeAttack = 0.0
-  var ownRangeAttack
+  var ownRangeAttack = 0.0
   var ownRegeneration = 0.0
 
   initClassFields()
 
   def initClassFields() =
-    ownTeam =Team(args(0).toInt
+    ownTeam = Team(args(0).toInt)
     ownType = args(1)
     ownHealth = args(2).toDouble
     ownArmor = args(3).toDouble
