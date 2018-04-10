@@ -9,20 +9,19 @@ import org.apache.spark.rdd.RDD
 
 object Crawler extends App{
 
+  val conf = new SparkConf().setAppName("Crawler").setMaster("local[*]")
+  val sc = new SparkContext(conf)
+  sc.setLogLevel("ERROR")
   var indexes = new Array[String](5)
-  //val baseUrl = "http://paizo.com/pathfinderRPG/prd/bestiary"
   indexes(0) = "http://paizo.com/pathfinderRPG/prd/bestiary/monsterIndex.html"
   indexes(1) = "http://paizo.com/pathfinderRPG/prd/bestiary2/additionalMonsterIndex.html"
   indexes(2) = "http://paizo.com/pathfinderRPG/prd/bestiary3/monsterIndex.html"
   indexes(3) = "http://paizo.com/pathfinderRPG/prd/bestiary4/monsterIndex.html"
   indexes(4) = "http://paizo.com/pathfinderRPG/prd/bestiary5/index.html"
-  val conf = new SparkConf().setAppName("Crawler").setMaster("local[*]")
-  val sc = new SparkContext(conf)
-  sc.setLogLevel("ERROR")
   val creatures = new ArrayBuffer[Creature]
   val spell = "heal mass"
 
-  if (!Files.exists(Paths.get("out"))) {
+  if (!Files.exists(Paths.get("Exercice1/out"))) {
     for (i <- 0 to 4) {
       crawlIndex(i)
       println(creatures.toString())
@@ -38,7 +37,7 @@ object Crawler extends App{
   }
 
 
-  val index = sc.objectFile[(String,List[String])]("out")
+  val index = sc.objectFile[(String,List[String])]("Exercice1/out")
   getCreatures(spell,index)
 
 
