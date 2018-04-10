@@ -24,7 +24,8 @@ object FirstFight {
     */
   def countTeamMember(currentGraph: Graph[_,_]): Array[Long] = {
     var teamMember = Array.empty[Long]
-    for ( team_ind <- 1 to Team.values.size ) {
+    for ( team_ind <- 0 to Team.values.size-1 ) {
+      print(team_ind)
       teamMember(team_ind) = currentGraph.vertices.filter {
         case (id, dragon) => dragon.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam == Team.values(Team(team_ind))
       }.count()

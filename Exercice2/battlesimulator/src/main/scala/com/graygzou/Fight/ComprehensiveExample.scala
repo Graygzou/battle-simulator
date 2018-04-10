@@ -42,7 +42,6 @@ object ComprehensiveExample {
     // ? val spark = SparkSession.builder.appName("Simple Application").getOrCreate()
     val sc = new SparkContext(conf)
 
-    // $example on$
     // Load my user data and parse into tuples of users id and attribute list
     val users = (sc.textFile("resources/examples/users.txt")
       .map(line => line.split(",")).map( parts => (parts.head.toLong, parts.tail) ))
