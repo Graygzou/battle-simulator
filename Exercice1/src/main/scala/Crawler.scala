@@ -2,6 +2,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
+import java.nio.file.{Files, Paths}
+import org.apache.spark.rdd.RDD
 
 
 
@@ -14,35 +16,35 @@ object Crawler extends App{
   indexes(2) = "http://paizo.com/pathfinderRPG/prd/bestiary3/monsterIndex.html"
   indexes(3) = "http://paizo.com/pathfinderRPG/prd/bestiary4/monsterIndex.html"
   indexes(4) = "http://paizo.com/pathfinderRPG/prd/bestiary5/index.html"
-  val creatures = new ArrayBuffer[Creature]
-
   val conf = new SparkConf().setAppName("Crawler").setMaster("local[*]")
   val sc = new SparkContext(conf)
   sc.setLogLevel("ERROR")
+  val creatures = new ArrayBuffer[Creature]
+  val spell = "heal mass"
 
-  //crawlIndex(0)
-
-  for (i <- 0 to 4) {
-    crawlIndex(i)
-    println(creatures.toString())
-    //val tab = Array(1, 2, 3, 4, 5)
+  if (!Files.exists(Paths.get("out"))) {
+    for (i <- 0 to 4) {
+      crawlIndex(i)
+      println(creatures.toString())
+      //val tab = Array(1, 2, 3, 4, 5)
+    }
+    val rdd = sc.parallelize(creatures)
+    val invertedIndex = rdd.map(creature => (creature.name + "," + creature.spells.mkString(",")))
+      .flatMap( x => x.split(",").drop(1).map(y => (y,x.split(",")(0))))
+      .reduceByKey((y,z) => (y+","+z))
+      .map(k => (k._1,k._2.split(",").toList))
+    //invertedIndex.foreach(println)
+    invertedIndex.saveAsObjectFile("out")
   }
-
-  val rdd = sc.parallelize(creatures)
-  val invertedIndex = rdd.map(creature => (creature.name + "," + creature.spells.mkString(",")))
-    .flatMap( x => x.split(",").drop(1).map(y => (y,x.split(",")(0))))
-    .reduceByKey((y,z) => (y+","+z))
-    .map(k => (k._1,k._2.split(",").toList))
-  //invertedIndex.foreach(println)
-  invertedIndex.saveAsObjectFile("out")
 
 
   val index = sc.objectFile[(String,List[String])]("out")
-  getCreatures("cure light wounds")
+  getCreatures(spell,index)
 
 
-  def getCreatures (spell : String): Unit = {
-    index.foreach( creature =>
+
+  def getCreatures (spell : String, rdd : RDD[(String,List[String])]): Unit = {
+    rdd.foreach( creature =>
       if (creature._1 == spell) {
         println(spell + " : " + creature._2.mkString(", "))
       }
