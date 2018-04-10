@@ -4,8 +4,8 @@
 
 package com.graygzou.Creatures
 
-class Outsider (name: String, health: Double, armor : Double, strength: Double, regeneration: Double)
-  extends Entity(name, health, armor, strength, regeneration) {
+class Outsider (args: Array[String])
+  extends Entity(args) {
 
   //---------------------------------
   // Should be in the list of spells

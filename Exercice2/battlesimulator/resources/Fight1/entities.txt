@@ -1,7 +1,2 @@
-1,1,BarackObama,Barack Obama
-2,1,ladygaga,Goddess of Love
-3,1,jeresig,John Resig
-4,2,justinbieber,Justin Bieber
-6,2,matei_zaharia,Matei Zaharia
-7,2,odersky,Martin Odersky
-8,2,anonsys
+1,1,BarackObama,1,0,1,0
+2,2,ladygaga,1,0,1,0
