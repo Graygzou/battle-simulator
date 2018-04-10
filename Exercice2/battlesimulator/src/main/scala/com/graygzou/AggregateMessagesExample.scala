@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 
 /**
   * An example use the [`aggregateMessages`][Graph.aggregateMessages] operator to
-  * compute the average age of the more senior followers of each user
+  * compute the average age of the more senior followers of each users
   * Run with
   * {{{
   * bin/run-example graphx.AggregateMessagesExample

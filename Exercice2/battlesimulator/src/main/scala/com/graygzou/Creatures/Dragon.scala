@@ -4,8 +4,8 @@
 
 package com.graygzou.Creatures
 
-class Dragon(name: String, health: Double, armor : Double, strength: Double, regeneration: Double)
-  extends Entity(name, health, armor, strength, regeneration) {
+class Dragon(args: Array[String])
+  extends Entity(args) {
 
   /**
     * Creatures with a fly speed receive the Fly skill for free as a class skill.

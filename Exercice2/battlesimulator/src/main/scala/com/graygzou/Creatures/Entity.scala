@@ -7,20 +7,42 @@
 
 package com.graygzou.Creatures
 
-class Entity(name: String, health: Double, armor : Double, strength: Double, regeneration: Double ) { //position: Vector3f
+/**
+  *
+  * Hint : We do not used case classes for representing entities because those are not immutable data
+  * (they will take damages, move around and maybe die).
+  */
+class Entity(args: Array[String]) extends Serializable { //position: Vector3f
 
-  // Basic constructor
-  var ownName = name
-  var ownHealth = health
-  var ownArmor = armor
-  var ownStrength = strength
-  var ownRegeneration = regeneration
+  // Set the entity team to a dummy value.
+  var ownTeam = 0;
+  var ownPosition = 0;
+
+  // Basic members fields.
+  var ownType = ""
+  var ownHealth = 0.0
+  var ownArmor = 0.0
+  var ownStrength = 0.0
+  var ownRegeneration = 0.0
+
+  initClassFields()
+
+  def initClassFields() =
+    ownTeam = args(0).toInt
+    ownType = args(1)
+    ownHealth = args(2).toDouble
+    ownArmor = args(3).toDouble
+    ownStrength = args(4).toDouble
+    ownRegeneration = args(5).toDouble
 
   // World coordinate
   //var ownPosition = position;
 
   // Accessors
-  def getName = ownName
+  def getTeam = ownTeam
+  def getPosition = ownPosition
+
+  def getType = ownType
   def getHealth = ownHealth
   def getArmor = ownArmor
   def getStrength = ownStrength
@@ -34,7 +56,6 @@ class Entity(name: String, health: Double, armor : Double, strength: Double, reg
 
 
   // Regular movements on Land.
-
   /**
     * A walk represents unhurried but purposeful movement (3 miles per hour for an unencumbered adult human).
     * A character moving his speed one time in a single round, is walking when he or she moves.
@@ -77,8 +98,9 @@ class Entity(name: String, health: Double, armor : Double, strength: Double, reg
     println(s"I'm runningx4 to ($x $y $z) position")
 
 
-  // TODO : right the correct body of this function
-  override def toString: String = super.toString
+  override def toString: String =
+    s"Type: ${getType}, Position: ${getPosition}, Team: ${getTeam} Health: ${getHealth}, " +
+      s"Armor: ${getArmor}, Strength: ${getStrength}, Regeneration: ${getRegeneration}."
 
   // ----- Others ------
 
