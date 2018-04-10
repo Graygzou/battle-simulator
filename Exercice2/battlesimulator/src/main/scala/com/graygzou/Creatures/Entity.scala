@@ -1,5 +1,6 @@
 /**
   * @author : Grégoire Boiron <gregoire.boiron@gmail.com>
+  *           Vidal Florian
   *
   * Functions comments are from the following website :
   * http://www.d20pfsrd.com/alignment-description/movement/
@@ -22,18 +23,20 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
   var ownType = ""
   var ownHealth = 0.0
   var ownArmor = 0.0
-  var ownStrength = 0.0
+  var ownMeleeAttack = 0.0
+  var ownRangeAttack
   var ownRegeneration = 0.0
 
   initClassFields()
 
   def initClassFields() =
-    ownTeam = args(0).toInt
+    ownTeam =Team(args(0).toInt
     ownType = args(1)
     ownHealth = args(2).toDouble
     ownArmor = args(3).toDouble
-    ownStrength = args(4).toDouble
-    ownRegeneration = args(5).toDouble
+    ownMeleeAttack = args(4).toDouble
+    ownRangeAttack = args(5).toDouble
+    ownRegeneration = args(6).toDouble
 
   // World coordinate
   //var ownPosition = position;
@@ -41,11 +44,11 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
   // Accessors
   def getTeam = ownTeam
   def getPosition = ownPosition
-
   def getType = ownType
   def getHealth = ownHealth
   def getArmor = ownArmor
-  def getStrength = ownStrength
+  def getMeleeAttack = ownMeleeAttack
+  def getRangeAttack = ownRangeAttack
   def getRegeneration = ownRegeneration
 
   // Functions that will be used for the simulation
@@ -100,7 +103,7 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
 
   override def toString: String =
     s"Type: ${getType}, Position: ${getPosition}, Team: ${getTeam} Health: ${getHealth}, " +
-      s"Armor: ${getArmor}, Strength: ${getStrength}, Regeneration: ${getRegeneration}."
+      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}."
 
   // ----- Others ------
 
