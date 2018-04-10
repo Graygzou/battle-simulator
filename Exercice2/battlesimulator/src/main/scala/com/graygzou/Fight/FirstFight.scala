@@ -17,6 +17,22 @@ import org.apache.spark.rdd.RDD
 
 object FirstFight {
 
+  /**
+    * Method used to check the end of the fight
+    * @param currentGraph : actual graph that represent alive entities
+    * @return Array[Long] : represent the number of alive members of each team.
+    */
+  def countTeamMember(currentGraph: Graph[_,_]): Array[Long] = {
+    var teamMember = Array.empty[Long]
+    for ( team_ind <- 1 to Team.values.size ) {
+      teamMember(team_ind) = currentGraph.vertices.filter {
+        case (id, dragon) => dragon.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam == Team.values(Team(team_ind))
+      }.count()
+    }
+    return teamMember
+  }
+
+
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("Fight 1").setMaster("local[*]")
@@ -44,11 +60,61 @@ object FirstFight {
     ).collect.foreach(println(_))
 
     // Extract all the team size and store them in a structure
-    var TeamMember = {}
-    for ( team_ind <- 1 to Team.values.size ) {
-      TeamMember(team_ind) = mainGraph.vertices.filter {
-        case (id, dragon) => dragon.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam == Team.values(Team(team_ind))
-      }
+    var teamMember = countTeamMember(mainGraph)
+
+    // --------------
+    // Gameloop
+    // --------------
+    // While their is still two teams in competition
+    // (at least one node from the last two teams)
+    while( teamMember.count( (numVertices: Long) => numVertices.!=(0) ) >= 2 ) {
+
+      // ---------------------------------
+      // Execute a turn of the game
+      // ---------------------------------
+      val playOneTurn: VertexRDD[(java.io.Serializable, Int)] = mainGraph.aggregateMessages[(java.io.Serializable, Int)] (
+
+        // Map Function : Send message (Source => Destinateur)
+        // 1) Retrieve creatures in range
+        // 2) Move around
+        // 3) Attacks msg (random + attack > armor => attack) or Do nothin
+        // 4) Heal msg
+        // 5) Move around
+        triplet => {
+          // TODO
+          /*
+          if (triplet.srcAttr > triplet.dstAttr) {
+            // Send message to destination vertex containing counter and age
+            triplet.sendToDst((1, triplet.srcAttr))
+          }*/
+        },
+
+        // Reduce Function : Received message
+        // 1) Sum of the damage taken
+        // 2) Check if some spells can be cast to avoid damages
+        // 3) Take damages left.
+        (id, Entity) => {
+          // TODO
+          (id._1, id._2)
+        }
+      )
+
+      // Divide total age by number of older followers to get average age of older followers
+      // TODO
+      /*
+      val avgAgeOfOlderFollowers: VertexRDD[Double] =
+        playOneTurn.mapValues( (id, value) =>
+          value match { case (count, totalAge) => totalAge / count } )*/
+
+
+      // Display the current turn in console
+      // TODO
+      //avgAgeOfOlderFollowers.collect.foreach(println(_))
+
+
+      // Update the team size based on the graph
+      teamMember = countTeamMember(mainGraph)
+
     }
 
     // Gameloop
@@ -70,13 +136,6 @@ object FirstFight {
         // }
       // }
     // }
-
-
-
-
-
-
-
 
 
     // }
