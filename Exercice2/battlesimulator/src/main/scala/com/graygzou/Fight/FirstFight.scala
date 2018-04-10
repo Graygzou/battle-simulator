@@ -6,6 +6,7 @@
 package com.graygzou.Fight
 
 import com.graygzou.Creatures.Entity
+import com.graygzou.Team
 import org.apache.spark.graphx.GraphLoader
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.graphx._
@@ -42,10 +43,13 @@ object FirstFight {
       triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
     ).collect.foreach(println(_))
 
-    /*
-    var team1 = mainGraph.subgraph(entity => entity.)
-
-    var team2 = mainGraph.subgraph*/
+    // Extract all the team size and store them in a structure
+    var TeamMember = {}
+    for ( team_ind <- 1 to Team.values.size ) {
+      TeamMember(team_ind) = mainGraph.vertices.filter {
+        case (id, dragon) => dragon.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam == Team.values(Team(team_ind))
+      }
+    }
 
     // Gameloop
     // While their is still a link between Team1 and Team2
