@@ -17,15 +17,19 @@ import org.apache.spark.rdd.RDD
 
 object FirstFight {
 
+
+
+
   /**
     * Method used to check the end of the fight
     * @param currentGraph : actual graph that represent alive entities
     * @return Array[Long] : represent the number of alive members of each team.
     */
   def countTeamMember(currentGraph: Graph[_,_]): Array[Long] = {
-    var teamMember = Array.empty[Long]
-    for ( team_ind <- 0 to Team.values.size-1 ) {
-      print(team_ind)
+    var teamMember = Array[Long](2) // TODO make more generic
+    println(teamMember.length)
+    for ( team_ind <- 0 to 1 ) {
+      println(Team.values.size-1)
       teamMember(team_ind) = currentGraph.vertices.filter {
         case (id, dragon) => dragon.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam == Team.values(Team(team_ind))
       }.count()
