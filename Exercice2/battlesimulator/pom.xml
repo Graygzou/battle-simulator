@@ -115,6 +115,13 @@
           <version>${jme3_v}</version>
       </dependency>
 
+      <!-- https://mvnrepository.com/artifact/net.sf.sociaal/jME3-testdata -->
+      <dependency>
+          <groupId>net.sf.sociaal</groupId>
+          <artifactId>jME3-testdata</artifactId>
+          <version>3.0.0.20130526</version>
+      </dependency>
+
   </dependencies>
 
 </project>
