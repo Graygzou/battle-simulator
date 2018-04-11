@@ -32,7 +32,7 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
   initClassFields()
 
   def initClassFields() =
-    ownTeam = Team(args(0).toInt)
+    ownTeam = Team(args(0).toInt - 1)   // In the .txt file, we start counting team at '1' and not '0'
     ownType = args(1)
     ownHealth = args(2).toDouble
     ownArmor = args(3).toDouble

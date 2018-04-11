@@ -15,30 +15,34 @@ import org.apache.xerces.impl.XMLEntityManager.Entity
 import org.apache.spark.rdd.RDD
 // $example off$
 
-object FirstFight {
-
-
-
+object BattleSimulation {
 
   /**
     * Method used to check the end of the fight
     * @param currentGraph : actual graph that represent alive entities
-    * @return Array[Long] : represent the number of alive members of each team.
+    * @return Array[Long] : represent the number of alive members of each team. Available in the following form :
+    *         List(nbAliveTeam1, nbAliveTeam2, ..., nbAliveTeamN)
     */
-  def countTeamMember(currentGraph: Graph[_,_]): Array[Long] = {
-    var teamMember = Array[Long](2) // TODO make more generic
-    println(teamMember.length)
+  def countTeamMember(currentGraph: Graph[_,_]): List[Int] = {
+    var teamMember: List[Int] = List() // TODO make more generic
     for ( team_ind <- 0 to 1 ) {
-      println(Team.values.size-1)
-      teamMember(team_ind) = currentGraph.vertices.filter {
-        case (id, dragon) => dragon.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam == Team.values(Team(team_ind))
+      val verticesCurrentTeam = currentGraph.vertices.filter {
+        case (id, infos) => infos.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam.equals(Team(team_ind))
+        case _ => false
       }.count()
+      teamMember = verticesCurrentTeam.toInt :: teamMember
     }
     return teamMember
   }
 
 
+  /**
+    * Main function. Call the launch a fight
+    * @param args
+    */
   def main(args: Array[String]): Unit = {
+
+    val NbTurnMax = 100  // Should be in the game.txt
 
     val conf = new SparkConf().setAppName("Fight 1").setMaster("local[*]")
     val sc = new SparkContext(conf)
@@ -66,13 +70,15 @@ object FirstFight {
 
     // Extract all the team size and store them in a structure
     var teamMember = countTeamMember(mainGraph)
+    var currentTurn = 0
 
     // --------------
     // Gameloop
     // --------------
     // While their is still two teams in competition
     // (at least one node from the last two teams)
-    while( teamMember.count( (numVertices: Long) => numVertices.!=(0) ) >= 2 ) {
+    while( teamMember.count( (numVertices) => numVertices.!=(0) ) >= 2 && currentTurn <= NbTurnMax) {
+      println("Turn n°" + currentTurn)
 
       // ---------------------------------
       // Execute a turn of the game
@@ -117,10 +123,16 @@ object FirstFight {
       //avgAgeOfOlderFollowers.collect.foreach(println(_))
 
 
-      // Update the team size based on the graph
+      // Update variables
+      // the team size based on the graph
       teamMember = countTeamMember(mainGraph)
 
+      currentTurn += 1
+
     }
+
+    println("The fight is done.")
+    println("The winning team is : ...") // TODO
 
     // Gameloop
     // While their is still a link between Team1 and Team2
@@ -167,9 +179,8 @@ object FirstFight {
     }
 
     println(userInfoWithPageRank.vertices.top(5)(Ordering.by(_._2._1)).mkString("\n"))
-    // $example off$
+    */
 
-    //spark.stop()*/
     sc.stop();
   }
 }
