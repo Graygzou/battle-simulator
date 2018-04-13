@@ -33,4 +33,11 @@ public class BattleSimulationJME3 extends SimpleApplication {
         //      Esc key – Quit the game
         //      Define your own additional keys and mouse click actions.
     }
+
+    /* Use the main event loop to trigger repeating actions. */
+    @Override
+    public void simpleUpdate(float tpf) {
+        // tpf : time par frame
+
+    }
 }

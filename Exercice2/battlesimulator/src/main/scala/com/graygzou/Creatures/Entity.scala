@@ -9,6 +9,8 @@
 package com.graygzou.Creatures
 
 import com.graygzou.Team
+import com.jme3.math.Vector3f
+import com.jme3.scene.Spatial
 
 /**
   *
@@ -17,9 +19,13 @@ import com.graygzou.Team
   */
 class Entity(args: Array[String]) extends Serializable { //position: Vector3f
 
-  // Set the entity team to a dummy value.
+  // Set his team to a dummy value.
   var ownTeam = Team(0);
   var ownPosition = 0;
+
+  // Usefull for 3D representation
+  var engineRepresentation : Spatial = _
+  var currentPosition : Vector3f = new Vector3f(0, 0, 0)
 
   // Basic members fields.
   var ownType = ""
@@ -39,6 +45,8 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
     ownMeleeAttack = args(4).toDouble
     ownRangeAttack = args(5).toDouble
     ownRegeneration = args(6).toDouble
+    // Special case for position
+    currentPosition = retrievePosition(args(7))
 
   // World coordinate
   //var ownPosition = position;
@@ -52,6 +60,7 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
   def getMeleeAttack = ownMeleeAttack
   def getRangeAttack = ownRangeAttack
   def getRegeneration = ownRegeneration
+  def getCurrentPosition = currentPosition
 
   // Functions that will be used for the simulation
 
@@ -103,10 +112,25 @@ class Entity(args: Array[String]) extends Serializable { //position: Vector3f
     println(s"I'm runningx4 to ($x $y $z) position")
 
 
+  // ----- Others ------
+
   override def toString: String =
     s"Type: ${getType}, Position: ${getPosition}, Team: ${getTeam} Health: ${getHealth}, " +
-      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}."
+      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}." +
+      s"Position: ${getCurrentPosition}"
 
-  // ----- Others ------
+  def retrievePosition(str: String) : Vector3f = {
+    var position = new Vector3f(0,0,0)
+    val coordinates : Array[String] = str.replace("(", "").replace(")","").split(",")
+    if(coordinates.length == 3) {
+      val x : Float = coordinates(0).toFloat
+      val y : Float = coordinates(1).toFloat
+      val z : Float = {
+        coordinates(2).toFloat
+      }
+      position = new Vector3f(x, y, z)
+    }
+    return position
+  }
 
 }

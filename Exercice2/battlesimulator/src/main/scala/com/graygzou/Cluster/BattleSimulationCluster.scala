@@ -1,18 +1,24 @@
 /**
   * @author Grégoire Boiron <gregoire.boiron@gmail.com>
+  * @version 0.0.1
   */
 
 // scalastyle:off println
-package com.graygzou
+package com.graygzou.Cluster
 
+import com.graygzou.Team
+import org.apache.spark
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.{SparkConf, SparkContext}
-
-import scala.io.Source
 // To make some of the examples work we will also need RDD
 // $example off$
 
-object BattleSimulation {
+class BattleSimulationCluster {
+
+  // Dummy values
+  var conf = new SparkConf()
+  var sc = new SparkContext(conf)
+  var NbTurnMax = 0
 
   /**
     * Method used to check the end of the fight
@@ -32,31 +38,33 @@ object BattleSimulation {
     return teamMember
   }
 
+  def initScalaContext(appName: String, mode: String) = {
+    // Override the SparkConf and the SparkContext with the correct value
+    conf = new SparkConf().setAppName(appName).setMaster(mode)
+    sc = new SparkContext(conf)
+  }
 
-  /**
-    * Main function. Call the launch a fight
-    * @param args
-    */
-  def main(args: Array[String]): Unit = {
+  def cleanScalaContext = {
+    sc.stop();
+  }
 
-    val NbTurnMax = 100  // Should be in the game.txt
 
-    val conf = new SparkConf().setAppName("Fight 1").setMaster("local[*]")
-    val sc = new SparkContext(conf)
+  private def setupGame(entitiesFile: String, relationFile: String) : Graph[_,_] = {
+    NbTurnMax = 100  // Should be in the game.txt
 
     // Load the first team data and parse into tuples of entity id and attribute list
-    val entitiesPath = getClass.getResource("/FightConfigs/Fight1/entities.txt")
+    val entitiesPath = getClass.getResource(entitiesFile)
     val gameEntities = sc.textFile(entitiesPath.getPath)
       .map(line => line.split(","))
       .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
 
     // Parse the edge data which is already in userId -> userId format
     // This graph represents possible interactions (hostiles or not) between entities.
-    val relationsPath = getClass.getResource("/FightConfigs/Fight1/relations.txt")
+    val relationsPath = getClass.getResource(relationFile)
     val relationGraph = GraphLoader.edgeListFile(sc, relationsPath.getPath())
 
     // Attach the users attributes
-    val mainGraph = relationGraph.outerJoinVertices(gameEntities) {
+    var mainGraph = relationGraph.outerJoinVertices(gameEntities) {
       case (uid, deg, Some(attrList)) => attrList
       // Some users may not have attributes so we set them as empty
       case (uid, deg, None) => Array.empty[String]
@@ -67,6 +75,15 @@ object BattleSimulation {
       triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
     ).collect.foreach(println(_))
 
+    return mainGraph
+  }
+
+
+  def launchGame(entitiesFile: String, relationFile: String) = {
+
+    // Init the first graph with
+    var mainGraph = setupGame(entitiesFile, relationFile)
+
     // Extract all the team size and store them in a structure
     var teamMember = countTeamMember(mainGraph)
     var currentTurn = 0
@@ -76,13 +93,13 @@ object BattleSimulation {
     // --------------
     // While their is still two teams in competition
     // (at least one node from the last two teams)
-    while( teamMember.count( (numVertices) => numVertices.!=(0) ) >= 2 && currentTurn <= NbTurnMax) {
+    while (teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax) {
       println("Turn n°" + currentTurn)
 
       // ---------------------------------
       // Execute a turn of the game
       // ---------------------------------
-      val playOneTurn: VertexRDD[(java.io.Serializable, Int)] = mainGraph.aggregateMessages[(java.io.Serializable, Int)] (
+      val playOneTurn: VertexRDD[(java.io.Serializable, Int)] = mainGraph.aggregateMessages[(java.io.Serializable, Int)](
 
         // Map Function : Send message (Source => Destinateur)
         // 1) Retrieve creatures in range
@@ -179,8 +196,6 @@ object BattleSimulation {
 
     println(userInfoWithPageRank.vertices.top(5)(Ordering.by(_._2._1)).mkString("\n"))
     */
-
-    sc.stop();
   }
 }
 // scalastyle:on println
