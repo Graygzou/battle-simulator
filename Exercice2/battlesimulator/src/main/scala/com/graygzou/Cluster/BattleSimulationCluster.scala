@@ -7,18 +7,20 @@
 package com.graygzou.Cluster
 
 import com.graygzou.Team
-import org.apache.spark
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.{SparkConf, SparkContext}
 // To make some of the examples work we will also need RDD
 // $example off$
 
-class BattleSimulationCluster {
+class BattleSimulationCluster(appName: String, mode: String) {
 
   // Dummy values
-  var conf = new SparkConf()
-  var sc = new SparkContext(conf)
   var NbTurnMax = 0
+
+  // Init Scala Context
+  // Create the SparkConf and the SparkContext with the correct value
+  val conf = new SparkConf().setAppName(appName).setMaster(mode)
+  val sc = new SparkContext(conf)
 
   /**
     * Method used to check the end of the fight
@@ -38,12 +40,9 @@ class BattleSimulationCluster {
     return teamMember
   }
 
-  def initScalaContext(appName: String, mode: String) = {
-    // Override the SparkConf and the SparkContext with the correct value
-    conf = new SparkConf().setAppName(appName).setMaster(mode)
-    sc = new SparkContext(conf)
-  }
-
+  /**
+    * Clean the application by closing the SparkContext
+    */
   def cleanScalaContext = {
     sc.stop();
   }

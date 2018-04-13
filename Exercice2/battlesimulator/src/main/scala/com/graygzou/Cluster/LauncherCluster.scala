@@ -13,11 +13,8 @@ object LauncherCluster {
     */
   def main(args: Array[String]): Unit = {
 
-    val game = new BattleSimulationCluster()
-
     // Init basic variables
-    game.initScalaContext("Fight 1","local[*]")
-
+    val game = new BattleSimulationCluster("Fight 1","local[*]")
 
     // Launch the simulation with the correct files
     // First file : contains data about the entities
