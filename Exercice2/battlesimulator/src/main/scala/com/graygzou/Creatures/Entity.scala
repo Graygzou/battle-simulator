@@ -8,24 +8,24 @@
 
 package com.graygzou.Creatures
 
+import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
 import com.graygzou.Team
 import com.jme3.math.Vector3f
-import com.jme3.scene.Spatial
 
 /**
-  *
   * Hint : We do not used case classes for representing entities because those are not immutable data
   * (they will take damages, move around and maybe die).
   */
-class Entity(args: Array[String]) extends Serializable { //position: Vector3f
+class Entity(args: Array[String]) extends Serializable {
 
   // Set his team to a dummy value.
   var ownTeam = Team(0);
   var ownPosition = 0;
 
-  // Usefull for 3D representation
-  var engineRepresentation : Spatial = _
   var currentPosition : Vector3f = new Vector3f(0, 0, 0)
+
+  // Used to make the agent move in the game
+  var steeringBehaviorModule = new SteeringBehavior()
 
   // Basic members fields.
   var ownType = ""

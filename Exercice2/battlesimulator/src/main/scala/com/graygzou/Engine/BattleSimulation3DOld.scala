@@ -13,12 +13,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 // To make some of the examples work we will also need RDD
 // $example off$
 
-class BattleSimulation3D extends SimpleApplication {
+class BattleSimulation3DOld extends SimpleApplication {
 
   var conf = new SparkConf().setAppName("Fight 1").setMaster("local[*]")
   var sc = new SparkContext(conf)
   val NbTurnMax = 0
-
 
   /**
     * Method used to check the end of the fight
