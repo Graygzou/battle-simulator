@@ -29,7 +29,7 @@ class BattleSimulation3DOld extends SimpleApplication {
     var teamMember : List[Int] = List() // TODO make more generic
     for ( team_ind <- 0 to 1 ) {
       val verticesCurrentTeam : VertexId = currentGraph.vertices.filter {
-        case (id, infos) => infos.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam.equals(Team(team_ind))
+        case (id, infos) => infos.asInstanceOf[com.graygzou.Creatures.Entity].getTeam.equals(Team(team_ind))
         case _ => false
       }.count()
       teamMember = verticesCurrentTeam.toInt :: teamMember
@@ -70,7 +70,7 @@ class BattleSimulation3DOld extends SimpleApplication {
 
     // Print the initial graph
     mainGraph.triplets.map(
-      triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
+      triplet => triplet.srcAttr + " <=====> " + triplet.attr + " <=====> " + triplet.dstAttr
     ).collect.foreach(println(_))
   }
 

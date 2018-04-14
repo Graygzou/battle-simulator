@@ -3,24 +3,23 @@
   * @version 0.0.1
   */
 
-// scalastyle:off println
 package com.graygzou.Cluster
 
-import com.graygzou.Team
-import org.apache.spark.graphx.{GraphLoader, _}
-import org.apache.spark.{SparkConf, SparkContext}
-// To make some of the examples work we will also need RDD
-// $example off$
+import java.io
 
-class BattleSimulationCluster(appName: String, mode: String) {
+import com.graygzou.{Relation, Team}
+import com.graygzou.Creatures.Entity
+import org.apache.spark.graphx.{GraphLoader, _}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.util.Random
+// To make some of the examples work we will also need RDD
+
+class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Serializable {
 
   // Dummy values
   var NbTurnMax = 0
-
-  // Init Scala Context
-  // Create the SparkConf and the SparkContext with the correct value
-  val conf = new SparkConf().setAppName(appName).setMaster(mode)
-  val sc = new SparkContext(conf)
 
   /**
     * Method used to check the end of the fight
@@ -29,10 +28,13 @@ class BattleSimulationCluster(appName: String, mode: String) {
     *         List(nbAliveTeam1, nbAliveTeam2, ..., nbAliveTeamN)
     */
   def countTeamMember(currentGraph: Graph[_,_]): List[Int] = {
+    // ----
+    // TODO : Maybe use groupBy function
+    // ----
     var teamMember: List[Int] = List() // TODO make more generic
     for ( team_ind <- 0 to 1 ) {
       val verticesCurrentTeam = currentGraph.vertices.filter {
-        case (id, infos) => infos.asInstanceOf[com.graygzou.Creatures.Entity].ownTeam.equals(Team(team_ind))
+        case (id, infos) => infos.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
         case _ => false
       }.count()
       teamMember = verticesCurrentTeam.toInt :: teamMember
@@ -43,31 +45,54 @@ class BattleSimulationCluster(appName: String, mode: String) {
   /**
     * Clean the application by closing the SparkContext
     */
-  def cleanScalaContext = {
+  def cleanScalaContext(sc: SparkContext) = {
     sc.stop();
   }
 
-
-  private def setupGame(entitiesFile: String, relationFile: String) : Graph[_,_] = {
+  /**
+    * Method called to init the game graph.
+    * @param entitiesFile File that contains all the game entities.
+    * @param relationFile File that contains all the relation between entities.
+    * @return The game graph will all the entities graph.
+    */
+  private def setupGame(entitiesFile: String, relationFile: String) : Graph[Entity, Relation] = {
     NbTurnMax = 100  // Should be in the game.txt
 
     // Load the first team data and parse into tuples of entity id and attribute list
     val entitiesPath = getClass.getResource(entitiesFile)
-    val gameEntities = sc.textFile(entitiesPath.getPath)
+    val gameEntities : RDD[(VertexId, Entity)] = sc.textFile(entitiesPath.getPath)
       .map(line => line.split(","))
       .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
 
     // Parse the edge data which is already in userId -> userId format
     // This graph represents possible interactions (hostiles or not) between entities.
     val relationsPath = getClass.getResource(relationFile)
-    val relationGraph = GraphLoader.edgeListFile(sc, relationsPath.getPath())
+
+    // Note :
+    // We do not used edgeListFile because it can only parse source and dest id.
+    //val relationGraph = GraphLoader.edgeListFile(sc, relationsPath.getPath())
+
+    // Instead we use :
+    val relationGraph : RDD[Edge[Relation]] = sc.textFile(relationsPath.getPath)
+      .map(line => line.split(","))
+      .map(parts => Edge(parts.head.toLong, parts.tail.head.toLong, new Relation(parts.tail.tail)))
 
     // Attach the users attributes
-    var mainGraph = relationGraph.outerJoinVertices(gameEntities) {
-      case (uid, deg, Some(attrList)) => attrList
+    /*
+    val mainGraph: Graph[Entity, PartitionID] = relationGraph.outerJoinVertices(gameEntities) {
+      case (uid, deg, Some(attrList)) => {
+        println("A : " + uid)
+        println("B : " + deg )
+        println("C : " + attrList )
+        attrList
+      }
       // Some users may not have attributes so we set them as empty
-      case (uid, deg, None) => Array.empty[String]
-    }
+      case (uid, deg, None) => null
+    }*/
+
+    val defaultEntity = new Entity()
+
+    val mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
 
     // Print the initial graph
     mainGraph.triplets.map(
@@ -77,11 +102,24 @@ class BattleSimulationCluster(appName: String, mode: String) {
     return mainGraph
   }
 
+  /**
+    * MergeMsg function
+    * Reduce Function : Received message
+    * 1) Sum of the damage taken
+    * 2) Check if some spells can be cast to avoid damages
+    * 3) Take damages left.
+    * TODO
+    */
+  /*
+  def mergeMsg(msg: VertexId, msg: VertexId): RDD[VertexId, Int]= {
+    return (msg._1, msg._2)
+  }*/
+
 
   def launchGame(entitiesFile: String, relationFile: String) = {
 
     // Init the first graph with
-    var mainGraph = setupGame(entitiesFile, relationFile)
+    var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
 
     // Extract all the team size and store them in a structure
     var teamMember = countTeamMember(mainGraph)
@@ -98,31 +136,33 @@ class BattleSimulationCluster(appName: String, mode: String) {
       // ---------------------------------
       // Execute a turn of the game
       // ---------------------------------
-      val playOneTurn: VertexRDD[(java.io.Serializable, Int)] = mainGraph.aggregateMessages[(java.io.Serializable, Int)](
+      val playOneTurn = mainGraph.aggregateMessages[(Serializable, Int)](
 
-        // Map Function : Send message (Source => Destinateur)
-        // 1) Retrieve creatures in range
-        // 2) Move around
-        // 3) Attacks msg (random + attack > armor => attack) or Do nothin
-        // 4) Heal msg
-        // 5) Move around
+        /**
+          * SendMsg function
+          * -- Should check if the opponents are aware of him (surprise round)
+          * 2) Move around
+          * 3) Attacks msg (random + attack > armor => attack) or Do nothin
+          * 4) Heal msg
+          * 5) Move around
+          * // TODO Should check if the two node are aware of each others.
+          */
+        // Map Function : Send message (Src -> Dest) and (Dest -> Src)
+        // Attention : If called, this method need to be executed in the Serialize class
         triplet => {
-          // TODO
-          /*
-          if (triplet.srcAttr > triplet.dstAttr) {
-            // Send message to destination vertex containing counter and age
-            triplet.sendToDst((1, triplet.srcAttr))
-          }*/
+          // Execute the turn of the source node (entity)
+          val resSrc = triplet.srcAttr.computeIA()
+          triplet.sendToDst(resSrc)
+
+          // Execute the turn of the source node (entity)
+          val resDest = triplet.dstAttr.computeIA()
+          triplet.sendToSrc(resDest)
+
         },
 
         // Reduce Function : Received message
-        // 1) Sum of the damage taken
-        // 2) Check if some spells can be cast to avoid damages
-        // 3) Take damages left.
-        (id, Entity) => {
-          // TODO
-          (id._1, id._2)
-        }
+        (a, b) => a
+
       )
 
       // Divide total age by number of older followers to get average age of older followers
@@ -137,17 +177,23 @@ class BattleSimulationCluster(appName: String, mode: String) {
       // TODO
       //avgAgeOfOlderFollowers.collect.foreach(println(_))
 
-
+      // ---------------------------------
       // Update variables
+      // ---------------------------------
+      // Filter all the dead entities from the graph
+      mainGraph.subgraph(vpred = (id, infos) => infos.asInstanceOf[Entity].getHealth <= 0)
       // the team size based on the graph
       teamMember = countTeamMember(mainGraph)
 
       currentTurn += 1
-
     }
 
     println("The fight is done.")
-    println("The winning team is : ...") // TODO
+    if(currentTurn >= NbTurnMax) {
+      println("It's a tight !")
+    } else {
+      println("The winning team is : " + teamMember.filter((numVertices) => numVertices.!=(0)).apply(0)) // Get the first team
+    }
 
     // Gameloop
     // While their is still a link between Team1 and Team2
@@ -197,4 +243,3 @@ class BattleSimulationCluster(appName: String, mode: String) {
     */
   }
 }
-// scalastyle:on println

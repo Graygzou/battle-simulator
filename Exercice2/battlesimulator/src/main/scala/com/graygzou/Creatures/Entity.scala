@@ -8,6 +8,7 @@
 
 package com.graygzou.Creatures
 
+import com.graygzou.Cluster.GameUtils
 import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
 import com.graygzou.Team
 import com.jme3.math.Vector3f
@@ -18,27 +19,29 @@ import com.jme3.math.Vector3f
   */
 class Entity(args: Array[String]) extends Serializable {
 
-  // Set his team to a dummy value.
-  var ownTeam = Team(0);
-  var ownPosition = 0;
+  // Basic members fields.
+  private var ownType = ""
+  private var ownHealth = 0.0
+  private var ownArmor = 0.0 // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
+  private var ownMeleeAttack = 0.0
+  private var ownRangeAttack = 0.0
+  private var ownRegeneration = 0.0
 
-  var currentPosition : Vector3f = new Vector3f(0, 0, 0)
+  // Set his team to a default value.
+  private var ownTeam = Team(0);
+  private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
 
   // Used to make the agent move in the game
-  var steeringBehaviorModule = new SteeringBehavior()
+  //var steeringBehaviorModule = new SteeringBehavior()
 
-  // Basic members fields.
-  var ownType = ""
-  var ownHealth = 0.0
-  var ownArmor = 0.0
-  var ownMeleeAttack = 0.0
-  var ownRangeAttack = 0.0
-  var ownRegeneration = 0.0
+  // no arguments constructor.
+  def this() {
+    this(Array("1","dummy","0","0","0","0","0","(0,0,0)"))
+  }
 
-  initClassFields()
-
-  def initClassFields() =
-    ownTeam = Team(args(0).toInt - 1)   // In the .txt file, we start counting team at '1' and not '0'
+  // Function that initialize class members
+  def initClassFields() = {
+    ownTeam = Team(args(0).toInt - 1) // In the .txt file, we start counting team at '1' and not '0'
     ownType = args(1)
     ownHealth = args(2).toDouble
     ownArmor = args(3).toDouble
@@ -47,20 +50,23 @@ class Entity(args: Array[String]) extends Serializable {
     ownRegeneration = args(6).toDouble
     // Special case for position
     currentPosition = retrievePosition(args(7))
+  }
+
+  // Call the "constructor" like.
+  initClassFields()
 
   // World coordinate
   //var ownPosition = position;
 
   // Accessors
   def getTeam = ownTeam
-  def getPosition = ownPosition
+  def getCurrentPosition = currentPosition
   def getType = ownType
   def getHealth = ownHealth
   def getArmor = ownArmor
   def getMeleeAttack = ownMeleeAttack
   def getRangeAttack = ownRangeAttack
   def getRegeneration = ownRegeneration
-  def getCurrentPosition = currentPosition
 
   // Functions that will be used for the simulation
 
@@ -115,9 +121,31 @@ class Entity(args: Array[String]) extends Serializable {
   // ----- Others ------
 
   override def toString: String =
-    s"Type: ${getType}, Position: ${getPosition}, Team: ${getTeam} Health: ${getHealth}, " +
-      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}." +
-      s"Position: ${getCurrentPosition}"
+    s"Type: ${getType}, Position: ${getCurrentPosition}, Team: ${getTeam} Health: ${getHealth}, " +
+      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}."
+
+  def computeIA(unit: Unit): (Serializable, Int) = {
+    var target = Unit
+
+    val d20Dice = GameUtils.rollDice(20)
+    // Test, depending on the throw if the attack is successful.
+    d20Dice match {
+      case 1 => {
+        println("Miss ...")
+      }
+      case 20 => println("HIT ! Maybe critical ?")
+      case value => {
+        println(" Let's test.. ")
+        if(value + 10 > 20) {
+          println(" HIT ! ")
+        } else {
+          println("Miss ...")
+        }
+      }
+    }
+
+    return(this, 0)
+  }
 
   def retrievePosition(str: String) : Vector3f = {
     var position = new Vector3f(0,0,0)

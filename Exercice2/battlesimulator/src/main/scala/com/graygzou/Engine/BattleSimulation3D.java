@@ -34,7 +34,7 @@ public class BattleSimulation3D extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         // Create the regular graph
-        game = new BattleSimulationCluster("Fight 1","local[*]");
+        //game = new BattleSimulationCluster("Fight 1","local[*]");
 
         // You initialize game objects:
 
