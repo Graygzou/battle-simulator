@@ -1,3 +1,4 @@
+package src.main.scala.com.graygzou.Creatures
 import scala.collection.mutable.ArrayBuffer
 
 class Creature(val creatureName : String) extends Serializable {
@@ -9,18 +10,18 @@ class Creature(val creatureName : String) extends Serializable {
       spells += spell
   }
 
-  def isEmpty(): Boolean = {
+  def isEmpty: Boolean = {
     if (spells.isEmpty)
-      return true
+      true
     else
-      return false
+      false
   }
 
-  def getSpells(): ArrayBuffer[String] = {
-    return this.spells;
+  def getSpells: ArrayBuffer[String] = {
+    this.spells
   }
 
-  override def toString() : String = {
-    return "Name : " + name + "   Spells : " + spells.toString()
+  override def toString: String = {
+    "Name : " + name + "   Spells : " + spells.toString()
   }
 }

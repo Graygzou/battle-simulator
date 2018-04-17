@@ -12,12 +12,19 @@ import com.graygzou.Cluster.GameUtils
 import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
 import com.graygzou.Team
 import com.jme3.math.Vector3f
+import org.apache.spark.{SparkConf, SparkContext}
+import src.main.scala.com.graygzou.Cluster.Crawler
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Hint : We do not used case classes for representing entities because those are not immutable data
   * (they will take damages, move around and maybe die).
   */
 class Entity(args: Array[String]) extends Serializable {
+
+
+  var crawler = new Crawler
 
   // Basic members fields.
   private var ownType = ""
@@ -30,13 +37,14 @@ class Entity(args: Array[String]) extends Serializable {
   // Set his team to a default value.
   private var ownTeam = Team(0);
   private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
+  private var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
 
   // Used to make the agent move in the game
   //var steeringBehaviorModule = new SteeringBehavior()
 
   // no arguments constructor.
   def this() {
-    this(Array("1","dummy","0","0","0","0","0","(0,0,0)"))
+    this(Array("1","dummy","0","0","0","0","0","(0,0,0)",""))
   }
 
   // Function that initialize class members
@@ -50,6 +58,7 @@ class Entity(args: Array[String]) extends Serializable {
     ownRegeneration = args(6).toDouble
     // Special case for position
     currentPosition = retrievePosition(args(7))
+    ownSpells = crawler.getSpellsByCreature(ownType)
   }
 
   // Call the "constructor" like.
@@ -67,6 +76,7 @@ class Entity(args: Array[String]) extends Serializable {
   def getMeleeAttack = ownMeleeAttack
   def getRangeAttack = ownRangeAttack
   def getRegeneration = ownRegeneration
+  def getSpells = ownSpells
 
   // Functions that will be used for the simulation
 

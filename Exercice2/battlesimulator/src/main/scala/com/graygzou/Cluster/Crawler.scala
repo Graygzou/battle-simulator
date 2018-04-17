@@ -1,17 +1,17 @@
+package src.main.scala.com.graygzou.Cluster
+
+import java.nio.file.{Files, Paths}
+
+import org.apache.spark.{SparkConf, SparkContext}
+import src.main.scala.com.graygzou.Creatures.Creature
+
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import java.nio.file.{Files, Paths}
-import org.apache.spark.rdd.RDD
 
-
-
-object Crawler extends App{
+class Crawler() {
 
   val conf = new SparkConf().setAppName("Crawler").setMaster("local[*]")
-  val sc = new SparkContext(conf)
-  sc.setLogLevel("ERROR")
+  val sc = SparkContext.getOrCreate(conf)
   var indexes = new Array[String](5)
   indexes(0) = "http://paizo.com/pathfinderRPG/prd/bestiary/monsterIndex.html"
   indexes(1) = "http://paizo.com/pathfinderRPG/prd/bestiary2/additionalMonsterIndex.html"
@@ -19,33 +19,53 @@ object Crawler extends App{
   indexes(3) = "http://paizo.com/pathfinderRPG/prd/bestiary4/monsterIndex.html"
   indexes(4) = "http://paizo.com/pathfinderRPG/prd/bestiary5/index.html"
   val creatures = new ArrayBuffer[Creature]
-  val spell = "heal mass"
-
-  if (!Files.exists(Paths.get("Exercice1/out"))) {
-    for (i <- 0 to 4) {
-      crawlIndex(i)
-      println(creatures.toString())
-      //val tab = Array(1, 2, 3, 4, 5)
-    }
-    val rdd = sc.parallelize(creatures)
-    val invertedIndex = rdd.map(creature => creature.name + "," + creature.spells.mkString(","))
-      .flatMap( x => x.split(",").drop(1).map(y => (y,x.split(",")(0))))
-      .reduceByKey((y,z) => y + "," + z)
-      .map(k => (k._1,k._2.split(",").toList))
-    //invertedIndex.foreach(println)
-    invertedIndex.saveAsObjectFile("out")
-  }
-
-  val index = sc.objectFile[(String,List[String])]("Exercice1/out")
-  getCreaturesBySpells(spell,index)
+  //val spell = "heal mass"
+  //getCreaturesBySpells(spell)
+  //getSpellsByCreature("angel solar")
 
 
-  def getCreaturesBySpells(spell : String, rdd : RDD[(String,List[String])]): Unit = {
-    rdd.foreach( pair =>
+
+  def getCreaturesBySpells (spell : String) : Unit = {
+    crawl()
+    val index = sc.objectFile[(String,List[String])]("RDDout/invertedIndex")
+    index.foreach( pair =>
       if (pair._1 == spell) {
         println(spell + " : " + pair._2.mkString(", "))
       }
     )
+  }
+
+  def getSpellsByCreature (name : String) : ArrayBuffer[String] = {
+    crawl()
+    var spells = new ArrayBuffer[String]()
+    val creaturesRdd = sc.objectFile[(String,ArrayBuffer[String])]("RDDout/index")
+    creaturesRdd.collect.foreach( x =>
+      if (x._1 == name) {
+        spells = x._2
+      }
+    )
+    return spells
+  }
+
+  def crawl() : Unit = {
+    if (!Files.exists(Paths.get("RDDout/index"))) {
+      for (i <- 0 to 4) {
+        crawlIndex(i)
+        println(creatures.toString())
+        //val tab = Array(1, 2, 3, 4, 5)
+      }
+      val rdd = sc.parallelize(creatures)
+      rdd.map(x => (x.name,x.spells)).saveAsObjectFile("RDDout/index")
+
+      if (!Files.exists(Paths.get("RDDout/invertedIndex"))) {
+        val invertedIndex = rdd.map(creature => creature.name + "," + creature.spells.mkString(","))
+          .flatMap(x => x.split(",").drop(1).map(y => (y, x.split(",")(0))))
+          .reduceByKey((y, z) => y + "," + z)
+          .map(k => (k._1, k._2.split(",").toList))
+        //invertedIndex.foreach(println)
+        invertedIndex.saveAsObjectFile("RDDout/invertedIndex")
+      }
+    }
   }
 
 
