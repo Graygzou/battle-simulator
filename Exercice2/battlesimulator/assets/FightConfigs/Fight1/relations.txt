@@ -1,6 +1,2 @@
-1,15,"attack"
-2,15,"attack"
-3,15,"attack"
-4,15,"attack"
-5,15,"attack"
-6,15,"attack"
+1,2,0
+1,3,0

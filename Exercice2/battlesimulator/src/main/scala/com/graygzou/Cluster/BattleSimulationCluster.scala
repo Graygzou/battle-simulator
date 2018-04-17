@@ -7,8 +7,9 @@ package com.graygzou.Cluster
 
 import java.io
 
-import com.graygzou.{Relation, Team}
+import com.graygzou.{EntitiesRelationType, Relation, Team}
 import com.graygzou.Creatures.Entity
+import javax.management.relation.RelationType
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -94,11 +95,6 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
 
     val mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
 
-    // Print the initial graph
-    mainGraph.triplets.map(
-      triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
-    ).collect.foreach(println(_))
-
     return mainGraph
   }
 
@@ -110,16 +106,12 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     * 3) Take damages left.
     * TODO
     */
-  /*
-  def mergeMsg(msg: VertexId, msg: VertexId): RDD[VertexId, Int]= {
-    return (msg._1, msg._2)
-  }*/
-
-
-  def launchGame(entitiesFile: String, relationFile: String) = {
+  def launchGame(entitiesFile: String, relationFile: String): Any = {
 
     // Init the first graph with
     var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
+
+    GameUtils.printGraph(mainGraph)
 
     // Extract all the team size and store them in a structure
     var teamMember = countTeamMember(mainGraph)
@@ -133,11 +125,12 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     while (teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax) {
       println("Turn n°" + currentTurn)
 
+      GameUtils.printGraph(mainGraph)
+
       // ---------------------------------
       // Execute a turn of the game
       // ---------------------------------
-      val playOneTurn = mainGraph.aggregateMessages[(Serializable, Int)](
-
+      val playOneTurn: VertexRDD[(EntitiesRelationType.Value, Float)] = mainGraph.aggregateMessages[(EntitiesRelationType.Value, Float)](
         /**
           * SendMsg function
           * -- Should check if the opponents are aware of him (surprise round)
@@ -152,25 +145,42 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
         triplet => {
           // Execute the turn of the source node (entity)
           val resSrc = triplet.srcAttr.computeIA()
-          triplet.sendToDst(resSrc)
+          println("IA source: " + resSrc)
+          triplet.sendToDst((triplet.attr.getType, resSrc))
 
           // Execute the turn of the source node (entity)
           val resDest = triplet.dstAttr.computeIA()
-          triplet.sendToSrc(resDest)
-
+          println("IA destinataire: " + resDest)
+          triplet.sendToSrc((triplet.attr.getType, resDest))
         },
 
         // Reduce Function : Received message
-        (a, b) => a
-
+        (a, b) => {
+          // Same kind of messages (both heal or attacks
+          if(a._1 == b._1) {
+            (a._1, a._2 + b._2)
+          } else {
+            // TODO
+            (a._1, a._2 + b._2)
+          }
+        }
       )
 
-      // Divide total age by number of older followers to get average age of older followers
-      // TODO
-      /*
-      val avgAgeOfOlderFollowers: VertexRDD[Double] =
-        playOneTurn.mapValues( (id, value) =>
-          value match { case (count, totalAge) => totalAge / count } )*/
+      // Update the game entities life's with corresponding messages (heals or attacks)
+      val updatedEntities: VertexRDD[Entity] =
+      playOneTurn.mapValues( (vertexId, value : (EntitiesRelationType.Value, Float)) =>
+        value match { case (entity, amountAction) =>
+          if(amountAction > 0) {
+            entity.asInstanceOf[Entity].takeDamages(amountAction)
+          }
+          return entity
+        }
+      )
+
+      // Display the results
+      updatedEntities.collect.foreach(println(_))
+
+      Thread.sleep(5000)
 
 
       // Display the current turn in console

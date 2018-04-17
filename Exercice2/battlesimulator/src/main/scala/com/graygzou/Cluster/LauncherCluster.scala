@@ -17,7 +17,7 @@ object LauncherCluster {
 
     // Init Scala Context
     // Create the SparkConf and the SparkContext with the correct value
-    val conf = new SparkConf().setAppName("Fight 1").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Fight 1").setMaster("local[1]")
     val sc = new SparkContext(conf)
 
     // Init basic variables

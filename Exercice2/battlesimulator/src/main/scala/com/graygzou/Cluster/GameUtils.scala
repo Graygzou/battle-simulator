@@ -5,6 +5,8 @@
 
 package com.graygzou.Cluster
 
+import org.apache.spark.graphx.Graph
+
 import scala.util.Random
 
 object GameUtils {
@@ -16,6 +18,12 @@ object GameUtils {
     */
   def rollDice(n: Int) : Int = {
     return Random.nextInt(n) + 1
+  }
+
+  def printGraph(mainGraph: Graph[_,_]): Unit = {
+    mainGraph.triplets.map(
+      triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
+    ).collect.foreach(println(_))
   }
 
 }
