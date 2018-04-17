@@ -5,7 +5,7 @@
 
 package com.graygzou.Cluster
 
-import scala.collection.mutable.ArrayBuffer
+import org.apache.spark.graphx.Graph
 import scala.util.Random
 
 object GameUtils {
@@ -20,6 +20,10 @@ object GameUtils {
   }
 
 
-
+  def printGraph(mainGraph: Graph[_,_]): Unit = {
+    mainGraph.triplets.map(
+      triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
+    ).collect.foreach(println(_))
+  }
 
 }

@@ -134,7 +134,12 @@ class Entity(args: Array[String]) extends Serializable {
     s"Type: ${getType}, Position: ${getCurrentPosition}, Team: ${getTeam} Health: ${getHealth}, " +
       s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}."
 
-  def computeIA(unit: Unit): (Serializable, Int) = {
+  /**
+    *
+    * @param unit TODO
+    * @return The amount of damage/heal the entity want to affect the enemies/allies
+    */
+  def computeIA(unit: Unit): Float = {
     var target = Unit
 
     val d20Dice = GameUtils.rollDice(20)
@@ -154,7 +159,16 @@ class Entity(args: Array[String]) extends Serializable {
       }
     }
 
-    return(this, 0)
+    return(10)
+  }
+
+  /**
+    * Add the given amount of health to the entity
+    * Note : This value can be negative if we want to damage the life of this entity.
+    * @param amount total of life we want to give back or retrieve.
+    */
+  def takeDamages(amount: Float): Unit = {
+    ownHealth += amount
   }
 
   def retrievePosition(str: String) : Vector3f = {
