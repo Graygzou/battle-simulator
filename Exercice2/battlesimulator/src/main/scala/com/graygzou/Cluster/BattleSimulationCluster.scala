@@ -9,12 +9,11 @@ import java.io
 
 import com.graygzou.{EntitiesRelationType, Relation, Team}
 import com.graygzou.Creatures.Entity
-import javax.management.relation.RelationType
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scala.util.Random
+
 // To make some of the examples work we will also need RDD
 
 class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Serializable {
@@ -35,19 +34,19 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     var teamMember: List[Int] = List() // TODO make more generic
     for ( team_ind <- 0 to 1 ) {
       val verticesCurrentTeam = currentGraph.vertices.filter {
-        case (id, infos) => infos.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
+        case (_, infos) => infos.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
         case _ => false
       }.count()
       teamMember = verticesCurrentTeam.toInt :: teamMember
     }
-    return teamMember
+    teamMember
   }
 
   /**
     * Clean the application by closing the SparkContext
     */
-  def cleanScalaContext(sc: SparkContext) = {
-    sc.stop();
+  def cleanScalaContext(sc: SparkContext): Unit = {
+    sc.stop()
   }
 
   /**
@@ -95,7 +94,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
 
     val mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
 
-    return mainGraph
+    mainGraph
   }
 
   /**
@@ -106,7 +105,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     * 3) Take damages left.
     * TODO
     */
-  def launchGame(entitiesFile: String, relationFile: String): Any = {
+  def launchGame(entitiesFile: String, relationFile: String): Unit = {
 
     // Init the first graph with
     var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
@@ -130,7 +129,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       // ---------------------------------
       // Execute a turn of the game
       // ---------------------------------
-      val playOneTurn: VertexRDD[(EntitiesRelationType.Value, Float)] = mainGraph.aggregateMessages[(EntitiesRelationType.Value, Float)](
+      val playOneTurn: VertexRDD[(EntitiesRelationType.Value, Float, Entity)] = mainGraph.aggregateMessages[(EntitiesRelationType.Value, Float, Entity)](
         /**
           * SendMsg function
           * -- Should check if the opponents are aware of him (surprise round)
@@ -146,36 +145,57 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
           // Execute the turn of the source node (entity)
           val resSrc = triplet.srcAttr.computeIA()
           println("IA source: " + resSrc)
-          triplet.sendToDst((triplet.attr.getType, resSrc))
+          triplet.sendToDst((triplet.attr.getType, resSrc, triplet.srcAttr))
 
           // Execute the turn of the source node (entity)
           val resDest = triplet.dstAttr.computeIA()
           println("IA destinataire: " + resDest)
-          triplet.sendToSrc((triplet.attr.getType, resDest))
+          triplet.sendToSrc((triplet.attr.getType, resDest, triplet.dstAttr))
         },
 
         // Reduce Function : Received message
+        /*TODO         - L'un des problèmes qu'on avait c'est qu'on ne savait pas à quelle entité il fallait appliquer
+          TODO (suite) - j'ai donc passé un troisième élément à notre tuple qui est sensé être l'entité destinataire
+          TODO (suite) - (celle qui reçoit les soins ou les dommages). Il semblerait que je n'ai toujours pas trouvé
+          TODO (suite) - comment faire (-.-')
+        */
         (a, b) => {
-          // Same kind of messages (both heal or attacks
-          if(a._1 == b._1) {
-            (a._1, a._2 + b._2)
+          if(a._1 == EntitiesRelationType.Ally && b._1 == EntitiesRelationType.Ally) {
+            // Case 1 : messages a and b are from allies
+            println("CASE 1")
+            (a._1, a._2 + b._2, a._3)
+          } else if (a._1 == EntitiesRelationType.Enemy && b._1 == EntitiesRelationType.Enemy){
+            // Case 2 : messages a and b are form enemies
+            println("CASE 2")
+            (a._1, - a._2 - b._2, a._3)
+          } else if (a._1 == EntitiesRelationType.Ally && b._1 != EntitiesRelationType.None) {
+            // Case 3 : message a is from an ally and b is from an enemy
+            println("CASE 3")
+            (a._1, a._2 - b._2, a._3)
+          } else if (a._1 != EntitiesRelationType.None && b._1 != EntitiesRelationType.None) {
+            // Case 4 : message a is from an enemy and b is from an ally
+            println("CASE 4")
+            (a._1, - a._2 + b._2, a._3)
           } else {
-            // TODO
-            (a._1, a._2 + b._2)
+            //TODO : cas bizarre avec les None (on a le droit d'attaquer des PNJ ?)
+            (a._1, 0, a._3)
           }
         }
       )
 
-      // Update the game entities life's with corresponding messages (heals or attacks)
-      val updatedEntities: VertexRDD[Entity] =
-      playOneTurn.mapValues( (vertexId, value : (EntitiesRelationType.Value, Float)) =>
-        value match { case (entity, amountAction) =>
-          if(amountAction > 0) {
-            entity.asInstanceOf[Entity].takeDamages(amountAction)
-          }
-          return entity
+      // Update the entities health points with corresponding messages (heals or attacks)
+      val updateEntity = (_: VertexId, value : (EntitiesRelationType.Value, Float, Entity)) => {
+        value match { case (_, amountAction, entity) =>
+          //if(amountAction != 0) {
+            print("Entity "+ entity.getType + " from team " + entity.getTeam + " received " + amountAction + "HP (from " + entity.getHealth + "hp to ")
+            entity.takeDamages(amountAction)
+            println(entity.getHealth + "hp)")
+         // }
+          entity
         }
-      )
+      }
+
+      val updatedEntities : VertexRDD[Entity] = playOneTurn.mapValues(updateEntity)
 
       // Display the results
       updatedEntities.collect.foreach(println(_))
@@ -191,7 +211,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       // Update variables
       // ---------------------------------
       // Filter all the dead entities from the graph
-      mainGraph.subgraph(vpred = (id, infos) => infos.asInstanceOf[Entity].getHealth <= 0)
+      mainGraph.subgraph(vpred = (_, infos) => infos.getHealth <= 0)
       // the team size based on the graph
       teamMember = countTeamMember(mainGraph)
 
@@ -202,7 +222,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     if(currentTurn >= NbTurnMax) {
       println("It's a tight !")
     } else {
-      println("The winning team is : " + teamMember.filter((numVertices) => numVertices.!=(0)).apply(0)) // Get the first team
+      println("The winning team is : " + teamMember.filter((numVertices) => numVertices.!=(0)).head) // Get the first team
     }
 
     // Gameloop

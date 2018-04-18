@@ -18,7 +18,7 @@ object TestEntity {
     printf("MeleeAttack %f\n", monster1.getMeleeAttack)
     printf("RangeAttack %f\n", monster1.getRangeAttack)
     printf("Regeneration %f\n", monster1.getRegeneration)
-    println("Spells " + monster1.getSpells)
+    //println("Spells " + monster1.getSpells)
     print("\n")
 
     // Create a dragon

@@ -24,7 +24,7 @@ import scala.collection.mutable.ArrayBuffer
 class Entity(args: Array[String]) extends Serializable {
 
 
-  var crawler = new Crawler
+  //var crawler = new Crawler
 
   // Basic members fields.
   private var ownType = ""
@@ -58,7 +58,7 @@ class Entity(args: Array[String]) extends Serializable {
     ownRegeneration = args(6).toDouble
     // Special case for position
     currentPosition = retrievePosition(args(7))
-    ownSpells = crawler.getSpellsByCreature(ownType)
+    //ownSpells = crawler.getSpellsByCreature(ownType)
   }
 
   // Call the "constructor" like.
@@ -137,7 +137,7 @@ class Entity(args: Array[String]) extends Serializable {
   /**
     *
     * @param unit TODO
-    * @return The amount of damage/heal the entity want to affect the enemies/allies
+    * @return The amount of damage/heal the entity want to affect the enemies/allies (always >= 0)
     */
   def computeIA(unit: Unit): Float = {
     var target = Unit
