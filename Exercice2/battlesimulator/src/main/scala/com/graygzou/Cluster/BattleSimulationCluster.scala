@@ -145,20 +145,17 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
           // Execute the turn of the source node (entity)
           val resSrc = triplet.srcAttr.computeIA()
           println("IA source: " + resSrc)
-          triplet.sendToDst((triplet.attr.getType, resSrc, triplet.srcAttr))
+          triplet.sendToDst((triplet.attr.getType, resSrc, triplet.dstAttr))
 
           // Execute the turn of the source node (entity)
           val resDest = triplet.dstAttr.computeIA()
           println("IA destinataire: " + resDest)
-          triplet.sendToSrc((triplet.attr.getType, resDest, triplet.dstAttr))
+          triplet.sendToSrc((triplet.attr.getType, resDest, triplet.srcAttr))
         },
 
         // Reduce Function : Received message
-        /*TODO         - L'un des problèmes qu'on avait c'est qu'on ne savait pas à quelle entité il fallait appliquer
-          TODO (suite) - j'ai donc passé un troisième élément à notre tuple qui est sensé être l'entité destinataire
-          TODO (suite) - (celle qui reçoit les soins ou les dommages). Il semblerait que je n'ai toujours pas trouvé
-          TODO (suite) - comment faire (-.-')
-        */
+        // TODO - Vérifier les liens entre les unités pour savoir si les dégâts/heals fonctionnent bien.
+        
         (a, b) => {
           if(a._1 == EntitiesRelationType.Ally && b._1 == EntitiesRelationType.Ally) {
             // Case 1 : messages a and b are from allies
