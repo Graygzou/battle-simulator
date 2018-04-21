@@ -5,13 +5,15 @@
 
 package com.graygzou.Cluster
 
-import java.io
+import java.{io, util}
 
 import com.graygzou.{EntitiesRelationType, Relation, Team}
 import com.graygzou.Creatures.Entity
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.collection.immutable.HashMap
 
 
 // To make some of the examples work we will also need RDD
@@ -156,10 +158,10 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       )
 
       // Update the entities health points with corresponding messages (heals or attacks)
-      val updateEntity = (_: VertexId, value : (Float, Entity)) => {
+      val updateEntity = (id: VertexId, value : (Float, Entity)) => {
         value match { case (amountAction, entity) =>
           //if(amountAction != 0) {
-            print("Entity has been updated : "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
+            print("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
             entity.takeDamages(amountAction)
             println(entity.getHealth + "hp)")
          // }
@@ -167,24 +169,42 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
         }
       }
 
-
-      val updatedEntities : VertexRDD[Entity] = playOneTurn.mapValues(updateEntity)
-
-      // Display the results
+      val updatedEntities = playOneTurn.mapValues(updateEntity)
       updatedEntities.collect.foreach(println(_))
 
+      // Create an array of the updated vertices and convert it into a RDD
+      val updatedEntitiesList = playOneTurn.mapValues(updateEntity).collectAsMap()
+      val vertices = mainGraph.vertices.collect()
+      var updatedVertices = new Array[(VertexId, Entity)](vertices.length)
+
+      val find = (vertex :(VertexId, Entity)) => {
+        // Return the old vertex if it has not been modified, else return the vertex with the updated entity
+        var value = vertex
+        if (updatedEntitiesList.keySet.contains(vertex._1)){
+          value = (vertex._1, updatedEntitiesList(vertex._1))
+        }
+        value
+      }
+
+      var i = 0
+      for (vertice <- vertices){
+        updatedVertices(i) = find(vertice)
+        i += 1
+      }
+
+      val updatedVerticesRDD : RDD[(VertexId, Entity)] = sc.parallelize(updatedVertices)
+
+      // Update the graph and print it
+      mainGraph = Graph(updatedVerticesRDD, mainGraph.edges, new Entity())
+      println("After damages and heals :")
+      mainGraph.vertices.collect.foreach(println(_))
+
+      // Filter all the dead entities from the graph
+      mainGraph = mainGraph.subgraph(vpred = (_, infos) => infos.getHealth > 0)
+      println("After death entity removel :")
+      mainGraph.vertices.collect.foreach(println(_))
       Thread.sleep(5000)
 
-
-      // Display the current turn in console
-      // TODO
-      //avgAgeOfOlderFollowers.collect.foreach(println(_))
-
-      // ---------------------------------
-      // Update variables
-      // ---------------------------------
-      // Filter all the dead entities from the graph
-      mainGraph.subgraph(vpred = (_, infos) => infos.getHealth <= 0)
       // the team size based on the graph
       teamMember = countTeamMember(mainGraph)
 
@@ -193,9 +213,14 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
 
     println("The fight is done.")
     if(currentTurn >= NbTurnMax) {
-      println("It's a tight !")
+      println("It's a tie !")
     } else {
-      println("The winning team is : " + teamMember.filter((numVertices) => numVertices.!=(0)).head) // Get the first team
+      val entitiesLeft = mainGraph.vertices.collect()
+      if(entitiesLeft.length > 0) {
+        println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
+      } else {
+        println("You are both dead !! HAHAHAHA")
+      }
     }
 
     // Gameloop
