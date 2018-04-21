@@ -5,7 +5,9 @@
 
 package com.graygzou.Cluster
 
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D
 import org.apache.spark.graphx.Graph
+
 import scala.util.Random
 
 object GameUtils {
@@ -16,7 +18,7 @@ object GameUtils {
     * @return an Int which is between 1 and n
     */
   def rollDice(n: Int) : Int = {
-    return Random.nextInt(n) + 1
+    Random.nextInt(n) + 1
   }
 
 

@@ -62,7 +62,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
 
     // Load the first team data and parse into tuples of entity id and attribute list
     val entitiesPath = getClass.getResource(entitiesFile)
-    val gameEntities : RDD[(VertexId, Entity)] = sc.textFile(entitiesPath.getPath)
+    var gameEntities : RDD[(VertexId, Entity)] = sc.textFile(entitiesPath.getPath)
       .map(line => line.split(","))
       .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
 
@@ -79,6 +79,26 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       .map(line => line.split(","))
       .map(parts => Edge(parts.head.toLong, parts.tail.head.toLong, new Relation(parts.tail.tail)))
 
+
+    // Add related entities (not optimized AT ALL but it does the job)
+    val gameEntitiesList = gameEntities.collectAsMap()
+    val relationGraphList = relationGraph.collect()
+
+    for (relation <- relationGraphList){
+      val relationId = relation.dstId
+      gameEntitiesList(relation.srcId).addRelativeEntity(relationId, gameEntitiesList(relationId))
+    }
+
+    val updatedGameEntities = new Array[(VertexId, Entity)](gameEntitiesList.keySet.size)
+    var i = 0
+    for (key <- gameEntitiesList.keySet) {
+      updatedGameEntities(i) = (key, gameEntitiesList(key))
+      i += 1
+    }
+    gameEntities = sc.parallelize(updatedGameEntities)
+
+
+
     // Attach the users attributes
     /*
     val mainGraph: Graph[Entity, PartitionID] = relationGraph.outerJoinVertices(gameEntities) {
@@ -93,9 +113,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     }*/
 
     val defaultEntity = new Entity()
-
     val mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
-
     mainGraph
   }
 
@@ -144,11 +162,16 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
         // Map Function : Send message (Src -> Dest) and (Dest -> Src)
         // Attention : If called, this method need to be executed in the Serialize class
         triplet => {
-          // Execute the turn of the source node (entity)
-          val relationType = triplet.attr.getType
-          val resSrc = triplet.srcAttr.computeIA(relationType)
-          println("IA source: " + resSrc)
-          triplet.sendToDst((resSrc, triplet.dstAttr))
+          //TODO: Replace 50 with the range of the entity (needs to be added to entity)
+          if (triplet.srcAttr.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition) <= 50 ) {
+            // Execute the turn of the source node (entity)
+            val relationType = triplet.attr.getType
+            val resSrc = triplet.srcAttr.computeIA(relationType)
+            println("IA source: " + resSrc)
+            triplet.sendToDst((resSrc, triplet.dstAttr))
+          } else {
+            triplet.sendToDst((0, triplet.dstAttr))
+          }
         },
 
         // Reduce Function : Received message

@@ -13,9 +13,11 @@ import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
 import com.graygzou.Team
 import com.jme3.math.Vector3f
 import com.graygzou.EntitiesRelationType
+import org.apache.spark.graphx.VertexId
 import org.apache.spark.{SparkConf, SparkContext}
 import src.main.scala.com.graygzou.Cluster.Crawler
 
+import scala.collection.immutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -39,6 +41,8 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownTeam = Team(0);
   private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
   private var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
+
+  private var ownRelatedEntities : HashMap[VertexId, Entity] = HashMap.empty[VertexId, Entity]
 
   // Used to make the agent move in the game
   //var steeringBehaviorModule = new SteeringBehavior()
@@ -78,7 +82,10 @@ class Entity(args: Array[String]) extends Serializable {
   def getRangeAttack = ownRangeAttack
   def getRegeneration = ownRegeneration
   def getSpells = ownSpells
+  def getRelatedEntities = ownRelatedEntities
 
+
+  def addRelativeEntity(vertexId: VertexId, entity: Entity) = ownRelatedEntities += (vertexId -> entity)
   // Functions that will be used for the simulation
 
   // Attack
@@ -133,7 +140,7 @@ class Entity(args: Array[String]) extends Serializable {
 
   override def toString: String =
     s"Type: ${getType}, Position: ${getCurrentPosition}, Team: ${getTeam} Health: ${getHealth}, " +
-      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}."
+      s"Armor: ${getArmor}, MeleeAttack: ${getMeleeAttack}, RangeAttack: ${getRangeAttack}, Regeneration: ${getRegeneration}, Relations: ${getRelatedEntities.keySet}"
 
   /**
     *
@@ -180,7 +187,7 @@ class Entity(args: Array[String]) extends Serializable {
 
   def retrievePosition(str: String) : Vector3f = {
     var position = new Vector3f(0,0,0)
-    val coordinates : Array[String] = str.replace("(", "").replace(")","").split(",")
+    val coordinates : Array[String] = str.replace("(", "").replace(")","").split("/")
     if(coordinates.length == 3) {
       val x : Float = coordinates(0).toFloat
       val y : Float = coordinates(1).toFloat
