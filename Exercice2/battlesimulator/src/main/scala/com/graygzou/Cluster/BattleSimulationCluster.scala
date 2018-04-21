@@ -167,10 +167,10 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
             // Execute the turn of the source node (entity)
             val relationType = triplet.attr.getType
             val resSrc = triplet.srcAttr.computeIA(relationType)
-            println("IA source: " + resSrc)
-            triplet.sendToDst((resSrc, triplet.dstAttr))
-          } else {
-            triplet.sendToDst((0, triplet.dstAttr))
+            if (resSrc != 0) {
+              println("IA source: " + resSrc)
+              triplet.sendToDst((resSrc, triplet.dstAttr))
+            }
           }
         },
 
@@ -198,12 +198,8 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       // Join the updated values to the graph
       mainGraph = mainGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
 
-      println("After damages and heals :")
-      mainGraph.vertices.collect.foreach(println(_))
-
       // Filter all the dead entities from the graph
       mainGraph = mainGraph.subgraph(vpred = (_, infos) => infos.getHealth > 0)
-      println("After death entity removel :")
       mainGraph.vertices.collect.foreach(println(_))
       Thread.sleep(5000)
 

@@ -36,6 +36,7 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownMeleeAttack = 0.0
   private var ownRangeAttack = 0.0
   private var ownRegeneration = 0.0
+  var turnDone = false
 
   // Set his team to a default value.
   private var ownTeam = Team(0);
@@ -148,32 +149,35 @@ class Entity(args: Array[String]) extends Serializable {
     * @return The amount of damage/heal the entity want to affect the enemies/allies
     */
   def computeIA(relationType: EntitiesRelationType.Value): Float = {
-    var target = Unit
-
-    val d20Dice = GameUtils.rollDice(20)
-    // Test, depending on the throw if the attack is successful.
-    d20Dice match {
-      case 1 => {
-        println("Miss ...")
-      }
-      case 20 => println("HIT ! Maybe critical ?")
-      case value => {
-        println(" Let's test.. ")
-        if(value + 10 > 20) {
-          println(" HIT ! ")
-        } else {
+    if (!turnDone) {
+      val d20Dice = GameUtils.rollDice(20)
+      // Test, depending on the throw if the attack is successful.
+      d20Dice match {
+        case 1 => {
           println("Miss ...")
         }
+        case 20 => println("HIT ! Maybe critical ?")
+        case value => {
+          println(" Let's test.. ")
+          if (value + 10 > 20) {
+            println(" HIT ! ")
+          } else {
+            println("Miss ...")
+          }
+        }
       }
+      var value = 10
+
+      turnDone = true
+      // Return a positive value if the entity is an ally (=heal) or negative if it's an enemy (=damage)
+      if (relationType == EntitiesRelationType.Ally)
+        value
+      else
+        -value
+    } else {
+      // Entity has already played this turn
+      0
     }
-    var value = 10
-
-
-    // Return a positive value if the entity is an ally (=heal) or negative if it's an enemy (=damage)
-    if (relationType == EntitiesRelationType.Ally)
-      value
-    else
-      -value
   }
 
   /**
