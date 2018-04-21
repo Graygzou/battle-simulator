@@ -12,6 +12,7 @@ import com.graygzou.Cluster.GameUtils
 import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
 import com.graygzou.Team
 import com.jme3.math.Vector3f
+import com.graygzou.EntitiesRelationType
 import org.apache.spark.{SparkConf, SparkContext}
 import src.main.scala.com.graygzou.Cluster.Crawler
 
@@ -136,10 +137,10 @@ class Entity(args: Array[String]) extends Serializable {
 
   /**
     *
-    * @param unit TODO
-    * @return The amount of damage/heal the entity want to affect the enemies/allies (always >= 0)
+    * @param relationType type of the relation with the destination entity
+    * @return The amount of damage/heal the entity want to affect the enemies/allies
     */
-  def computeIA(unit: Unit): Float = {
+  def computeIA(relationType: EntitiesRelationType.Value): Float = {
     var target = Unit
 
     val d20Dice = GameUtils.rollDice(20)
@@ -158,8 +159,14 @@ class Entity(args: Array[String]) extends Serializable {
         }
       }
     }
+    var value = 10
 
-    return(10)
+
+    // Return a positive value if the entity is an ally (=heal) or negative if it's an enemy (=damage)
+    if (relationType == EntitiesRelationType.Ally)
+      value
+    else
+      -value
   }
 
   /**

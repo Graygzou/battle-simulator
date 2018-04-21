@@ -129,7 +129,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       // ---------------------------------
       // Execute a turn of the game
       // ---------------------------------
-      val playOneTurn: VertexRDD[(EntitiesRelationType.Value, Float, Entity)] = mainGraph.aggregateMessages[(EntitiesRelationType.Value, Float, Entity)](
+      val playOneTurn: VertexRDD[(Float, Entity)] = mainGraph.aggregateMessages[(Float, Entity)](
         /**
           * SendMsg function
           * -- Should check if the opponents are aware of him (surprise round)
@@ -143,54 +143,30 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
         // Attention : If called, this method need to be executed in the Serialize class
         triplet => {
           // Execute the turn of the source node (entity)
-          val resSrc = triplet.srcAttr.computeIA()
+          val relationType = triplet.attr.getType
+          val resSrc = triplet.srcAttr.computeIA(relationType)
           println("IA source: " + resSrc)
-          triplet.sendToDst((triplet.attr.getType, resSrc, triplet.dstAttr))
-
-          // Execute the turn of the source node (entity)
-          val resDest = triplet.dstAttr.computeIA()
-          println("IA destinataire: " + resDest)
-          triplet.sendToSrc((triplet.attr.getType, resDest, triplet.srcAttr))
+          triplet.sendToDst((resSrc, triplet.dstAttr))
         },
 
         // Reduce Function : Received message
-        // TODO - Vérifier les liens entre les unités pour savoir si les dégâts/heals fonctionnent bien.
-        
         (a, b) => {
-          if(a._1 == EntitiesRelationType.Ally && b._1 == EntitiesRelationType.Ally) {
-            // Case 1 : messages a and b are from allies
-            println("CASE 1")
-            (a._1, a._2 + b._2, a._3)
-          } else if (a._1 == EntitiesRelationType.Enemy && b._1 == EntitiesRelationType.Enemy){
-            // Case 2 : messages a and b are form enemies
-            println("CASE 2")
-            (a._1, - a._2 - b._2, a._3)
-          } else if (a._1 == EntitiesRelationType.Ally && b._1 != EntitiesRelationType.None) {
-            // Case 3 : message a is from an ally and b is from an enemy
-            println("CASE 3")
-            (a._1, a._2 - b._2, a._3)
-          } else if (a._1 != EntitiesRelationType.None && b._1 != EntitiesRelationType.None) {
-            // Case 4 : message a is from an enemy and b is from an ally
-            println("CASE 4")
-            (a._1, - a._2 + b._2, a._3)
-          } else {
-            //TODO : cas bizarre avec les None (on a le droit d'attaquer des PNJ ?)
-            (a._1, 0, a._3)
-          }
+          (a._1 + b._1, a._2)
         }
       )
 
       // Update the entities health points with corresponding messages (heals or attacks)
-      val updateEntity = (_: VertexId, value : (EntitiesRelationType.Value, Float, Entity)) => {
-        value match { case (_, amountAction, entity) =>
+      val updateEntity = (_: VertexId, value : (Float, Entity)) => {
+        value match { case (amountAction, entity) =>
           //if(amountAction != 0) {
-            print("Entity "+ entity.getType + " from team " + entity.getTeam + " received " + amountAction + "HP (from " + entity.getHealth + "hp to ")
+            print("Entity has been updated : "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
             entity.takeDamages(amountAction)
             println(entity.getHealth + "hp)")
          // }
           entity
         }
       }
+
 
       val updatedEntities : VertexRDD[Entity] = playOneTurn.mapValues(updateEntity)
 
