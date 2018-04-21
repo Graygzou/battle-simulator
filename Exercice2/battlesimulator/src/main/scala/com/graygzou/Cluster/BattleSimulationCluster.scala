@@ -195,30 +195,9 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       val updatedEntities = playOneTurn.mapValues(updateEntity)
       updatedEntities.collect.foreach(println(_))
 
-      // Create an array of the updated vertices and convert it into a RDD
-      val updatedEntitiesList = playOneTurn.mapValues(updateEntity).collectAsMap()
-      val vertices = mainGraph.vertices.collect()
-      var updatedVertices = new Array[(VertexId, Entity)](vertices.length)
+      // Join the updated values to the graph
+      mainGraph = mainGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
 
-      val find = (vertex :(VertexId, Entity)) => {
-        // Return the old vertex if it has not been modified, else return the vertex with the updated entity
-        var value = vertex
-        if (updatedEntitiesList.keySet.contains(vertex._1)){
-          value = (vertex._1, updatedEntitiesList(vertex._1))
-        }
-        value
-      }
-
-      var i = 0
-      for (vertice <- vertices){
-        updatedVertices(i) = find(vertice)
-        i += 1
-      }
-
-      val updatedVerticesRDD : RDD[(VertexId, Entity)] = sc.parallelize(updatedVertices)
-
-      // Update the graph and print it
-      mainGraph = Graph(updatedVerticesRDD, mainGraph.edges, new Entity())
       println("After damages and heals :")
       mainGraph.vertices.collect.foreach(println(_))
 
