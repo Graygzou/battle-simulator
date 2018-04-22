@@ -30,20 +30,20 @@ class Entity(args: Array[String]) extends Serializable {
   //var crawler = new Crawler
 
   // Basic members fields.
-  private var ownType = ""
-  private var ownHealth = 0.0
-  private var ownArmor = 0.0 // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
-  private var ownMeleeAttack = 0.0
-  private var ownRangeAttack = 0.0
-  private var ownRegeneration = 0.0
+  protected var ownType = ""
+  protected var ownHealth = 0.0
+  protected var ownArmor = 0.0 // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
+  protected var ownMeleeAttack = 0.0
+  protected var ownRangeAttack = 0.0
+  protected var ownRegeneration = 0.0
   var turnDone = false
 
   // Set his team to a default value.
-  private var ownTeam = Team(0);
-  private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
-  private var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
+  protected var ownTeam = Team(0);
+  protected var currentPosition : Vector3f = new Vector3f(0, 0, 0)
+  protected var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
 
-  private var ownRelatedEntities : HashMap[VertexId, Entity] = HashMap.empty[VertexId, Entity]
+  protected var ownRelatedEntities : HashMap[VertexId, Entity] = HashMap.empty[VertexId, Entity]
 
   // Used to make the agent move in the game
   //var steeringBehaviorModule = new SteeringBehavior()
