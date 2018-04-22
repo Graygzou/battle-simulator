@@ -36,7 +36,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     var teamMember: List[Int] = List() // TODO make more generic
     for ( team_ind <- 0 to 1 ) {
       val verticesCurrentTeam = currentGraph.vertices.filter {
-        case (_, infos) => infos.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
+        case (_, info) => info.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
         case _ => false
       }.count()
       teamMember = verticesCurrentTeam.toInt :: teamMember
@@ -86,7 +86,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
 
     for (relation <- relationGraphList){
       val relationId = relation.dstId
-      gameEntitiesList(relation.srcId).addRelativeEntity(relationId, gameEntitiesList(relationId))
+      gameEntitiesList(relation.srcId).addRelativeEntity(relationId, gameEntitiesList(relationId), relation.attr.getType)
     }
 
     val updatedGameEntities = new Array[(VertexId, Entity)](gameEntitiesList.keySet.size)
@@ -162,15 +162,22 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
         // Map Function : Send message (Src -> Dest) and (Dest -> Src)
         // Attention : If called, this method need to be executed in the Serialize class
         triplet => {
-          //TODO: Replace 50 with the range of the entity (needs to be added to entity)
-          if (triplet.srcAttr.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition) <= 50 ) {
-            // Execute the turn of the source node (entity)
-            val relationType = triplet.attr.getType
-            val resSrc = triplet.srcAttr.computeIA(relationType)
-            if (resSrc != 0) {
-              println("IA source: " + resSrc)
-              triplet.sendToDst((resSrc, triplet.dstAttr))
-            }
+          val entitySrc = triplet.srcAttr
+          val distance = entitySrc.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition)
+          val relationType = triplet.attr.getType
+
+          val action = entitySrc.computeIA(relationType, triplet.srcId, distance)
+
+          if (distance <= entitySrc.getRangedAttackRange) {
+            val baseDamage = if (distance <= entitySrc.getMeleeAttackRange) entitySrc.getMeleeAttack else entitySrc.getRangedAttack
+            println("base dam: " + baseDamage)
+
+
+            //val resSrc = triplet.srcAttr.computeIA(relationType, triplet.srcId)
+            //if (resSrc != 0) {
+              //println("IA source: " + resSrc)
+              //triplet.sendToDst((resSrc, triplet.dstAttr))
+            //}
           }
         },
 
@@ -199,7 +206,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
       mainGraph = mainGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
 
       // Filter all the dead entities from the graph
-      mainGraph = mainGraph.subgraph(vpred = (_, infos) => infos.getHealth > 0)
+      mainGraph = mainGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
       mainGraph.vertices.collect.foreach(println(_))
       Thread.sleep(5000)
 
