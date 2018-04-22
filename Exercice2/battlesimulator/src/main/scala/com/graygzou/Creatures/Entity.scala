@@ -327,9 +327,9 @@ class Entity(args: Array[String]) extends Serializable {
       turnDone = true
       // Return a positive value if the entity is an ally (=heal) or negative if it's an enemy (=damage)
       if (relationType == EntitiesRelationType.Ally)
-        value
+        action = (ownGoal,value)
       else
-        -value
+        action = (ownGoal,-value)
     }
     action
   }
