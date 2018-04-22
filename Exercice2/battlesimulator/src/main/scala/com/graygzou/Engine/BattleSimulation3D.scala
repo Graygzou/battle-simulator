@@ -7,7 +7,8 @@ package com.graygzou.Engine
 
 import com.graygzou.Cluster.GameUtils
 import com.graygzou.Creatures.Entity
-import com.graygzou.{Relation, Team}
+import com.graygzou.{Relation, Team, TeamEntities}
+import com.jme3.math.ColorRGBA
 import org.apache.spark.graphx.{Graph, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -24,6 +25,7 @@ class BattleSimulation3D extends Serializable {
   var NbTurnMax = 0
 
   var screenEntities: Array[Entity] = Array.empty
+  var screenTeams: Array[TeamEntities] = Array.empty
 
   /**
     * Method used to check the end of the fight
@@ -68,7 +70,14 @@ class BattleSimulation3D extends Serializable {
       .map(line => line.split(","))
       .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
 
+    // Retrieve screen entities
     screenEntities = gameEntities.map(x => x._2).collect
+
+    // Create teams
+    screenEntities.foreach( e => screenTeams.apply(e.getTeam.id).addEntity(e))
+
+    // count in teams
+    println(screenTeams.length)
 
     // Parse the edge data which is already in userId -> userId format
     // This graph represents possible interactions (hostiles or not) between entities.
@@ -115,6 +124,14 @@ class BattleSimulation3D extends Serializable {
     * TODO
     */
   def initGame(entitiesFile: String, relationFile: String): Unit = {
+
+    val nbTeam = 2 // Should be in the entitiesFile or another.
+
+    // Create all the teams
+    screenTeams = new Array(nbTeam)
+    for(i <- 0 to (nbTeam-1)) {
+      screenTeams(i) = new TeamEntities(ColorRGBA.randomColor())
+    }
 
     // Init the first graph with
     var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)

@@ -67,6 +67,7 @@ public class Engine3D extends SimpleApplication {
             // Load and set the material
             Material mat_default = new Material(
                     assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");
+            //mat_default.setColor("Color", currentEntity.getTeam());
             teapot.setMaterial(mat_default);
 
             // Attach the current entity to the rootNode
