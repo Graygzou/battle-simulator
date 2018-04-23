@@ -50,8 +50,6 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownHeal = 0.0
   private var ownHealRange = 0.0
 
-
-
   private var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
 
   private var ownRelatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
@@ -86,7 +84,6 @@ class Entity(args: Array[String]) extends Serializable {
     currentFly = args(11).toDouble
     ownHeal = args(12).toDouble
     ownHealRange = args(13).toDouble
-    currentHealth = 3
 
 
     //ownSpells = crawler.getSpellsByCreature(ownType)
@@ -124,6 +121,17 @@ class Entity(args: Array[String]) extends Serializable {
 
 
   def hasHeal: Boolean = ownHeal > 0
+
+  def regenerate(): Unit = currentHealth += ownRegeneration
+
+  def fixHealth(): Unit = if (currentHealth > ownMaxHealth) currentHealth = ownMaxHealth
+
+  def resetTurn(): Unit = turnDone = false
+
+  def resetSpeed(): Unit = {
+    currentSpeed = ownMaxSpeed
+    currentFly = ownMaxFly
+  }
 
   def addRelativeEntity(vertexId: VertexId, entity: Entity, relation: EntitiesRelationType.Value): Unit = {
     ownRelatedEntities += (vertexId -> (entity, relation))
@@ -242,9 +250,13 @@ class Entity(args: Array[String]) extends Serializable {
   }
 
   /**
+    * Search a goal :
+    *    - Priority 1 : heal yourself (HP under 40%)
+    *    - Priority 2 : find the most wounded ally to heal (HP under 40% and ally can't be killed in 1-2 hits)
+    *    - Priority 3 : attack closest enemy
     *
-    * @param myVertexId
-    * @param range
+    * @param myVertexId id of the current in case it needs to be its own goal
+    * @param range how far should the research be
     * @return Tuple with a boolean to know if a goal exists and vertexId of the closest enemy (except if the goal is
     *         the entity itself)
     */
@@ -263,7 +275,7 @@ class Entity(args: Array[String]) extends Serializable {
       result = (true, myVertexId)
       result
     } else {
-      // Find all the entities nearby (150ft or less)
+      // Find all the entities nearby
       val entities = searchEntitiesNearby(range)
       val nearbyEntities = entities._1
       val closestEnemy = entities._2
@@ -331,7 +343,6 @@ class Entity(args: Array[String]) extends Serializable {
   def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distance: Float): (VertexId, Double) = {
 
     var action = (-3L,0D)
-    val d20Dice = GameUtils.rollDice(20)
 
     if (!turnDone) {
       // Search a goal
@@ -348,7 +359,7 @@ class Entity(args: Array[String]) extends Serializable {
       if (result._1) {
         // The goal is the entity itself i.e. it will heal itself
         if (ownGoal == myVertexId) {
-          action = (myVertexId, ownHeal)
+          action = (myVertexId, ownHeal + GameUtils.rollDice(10))
           turnDone = true
         } else {
           if (itsVertexId == ownGoal) {
@@ -383,9 +394,6 @@ class Entity(args: Array[String]) extends Serializable {
         }
       }
     }
-    println("LEL - " + myVertexId +" : " + currentPosition.toString)
-    currentPosition.x += 1
-    println("LEL - " + myVertexId +" : " + currentPosition.toString)
     action
   }
 

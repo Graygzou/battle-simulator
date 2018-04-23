@@ -223,7 +223,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       if(entitiesLeft.length > 0) {
         println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
       } else {
-        println("You are both dead !! HAHAHAHA")
+        println("You are all dead !! HAHAHAHA")
       }
     }
 
@@ -337,6 +337,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
         } else if (action._1 == triplet.dstId) {
           triplet.sendToDst((action._2.toFloat, triplet.dstAttr))
         }
+        triplet.sendToSrc(0, entitySrc)
       },
 
       // Reduce Function : Received message
@@ -348,19 +349,26 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     // Update the entities health points with corresponding messages (heals or attacks)
     val updateEntity = (id: VertexId, value : (Float, Entity)) => {
       value match { case (amountAction, entity) =>
-        //if(amountAction != 0) {
+        // Update damages
+        if(amountAction != 0) {
         print("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
         entity.takeDamages(amountAction)
         println(entity.getHealth + "hp)")
-        // }
+        }
+
+        // Update other fields
+        entity.resetTurn()
+        entity.resetSpeed()
+        entity.regenerate()
+        entity.fixHealth()
+
         entity
       }
     }
 
     val updatedEntities = playOneTurn.mapValues(updateEntity)
     updatedEntities.collect.foreach(println(_))
-
-    return updatedEntities
+    updatedEntities
   }
 
 }
