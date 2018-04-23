@@ -16,6 +16,8 @@ import org.apache.spark.{SparkConf, SparkContext}
 // To make some of the examples work we will also need RDD
 class BattleSimulation3D extends Serializable {
 
+  private val debug = false
+
   // Init Scala Context
   // Create the SparkConf and the SparkContext with the correct value
   val conf = new SparkConf().setAppName("Fight 1").setMaster("local[1]")
@@ -73,11 +75,22 @@ class BattleSimulation3D extends Serializable {
     // Retrieve screen entities
     screenEntities = gameEntities.map(x => x._2).collect
 
+    if(debug) {
+      println("Nb Entity: " + screenEntities.length)
+      screenEntities.foreach(e => println(e.toString))
+    }
+
     // Create teams
-    screenEntities.foreach( e => screenTeams.apply(e.getTeam.id).addEntity(e))
+    screenEntities.foreach( e => {
+      println(e.getTeam.id)
+      screenTeams(e.getTeam.id).addEntity(e)
+    })
 
     // count in teams
-    println(screenTeams.length)
+    if(debug) {
+      println("Nb Team " + screenTeams.length)
+      screenTeams.foreach(t =>  println(t.toString))
+    }
 
     // Parse the edge data which is already in userId -> userId format
     // This graph represents possible interactions (hostiles or not) between entities.
@@ -99,7 +112,7 @@ class BattleSimulation3D extends Serializable {
 
     for (relation <- relationGraphList){
       val relationId = relation.dstId
-      gameEntitiesList(relation.srcId).addRelativeEntity(relationId, gameEntitiesList(relationId))
+      //gameEntitiesList(relation.srcId).addRelativeEntity(relationId, gameEntitiesList(relationId))
     }
 
     val updatedGameEntities = new Array[(VertexId, Entity)](gameEntitiesList.keySet.size)
@@ -126,11 +139,12 @@ class BattleSimulation3D extends Serializable {
   def initGame(entitiesFile: String, relationFile: String): Unit = {
 
     val nbTeam = 2 // Should be in the entitiesFile or another.
+    val TeamsNbMembers = Array(100, 100) // also
 
     // Create all the teams
     screenTeams = new Array(nbTeam)
     for(i <- 0 to (nbTeam-1)) {
-      screenTeams(i) = new TeamEntities(ColorRGBA.randomColor())
+      screenTeams(i) = new TeamEntities(ColorRGBA.randomColor(), TeamsNbMembers(i))
     }
 
     // Init the first graph with
@@ -217,9 +231,9 @@ class BattleSimulation3D extends Serializable {
         if (triplet.srcAttr.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition) <= 50 ) {
           // Execute the turn of the source node (entity)
           val relationType = triplet.attr.getType
-          val resSrc = triplet.srcAttr.computeIA(relationType)
-          println("IA source: " + resSrc)
-          triplet.sendToDst((resSrc, triplet.dstAttr))
+          //val resSrc = triplet.srcAttr.computeIA(relationType)
+          //println("IA source: " + resSrc)
+          //triplet.sendToDst((resSrc, triplet.dstAttr))
         } else {
           triplet.sendToDst((0, triplet.dstAttr))
         }

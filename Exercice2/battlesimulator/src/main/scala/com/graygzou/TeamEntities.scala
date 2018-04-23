@@ -3,23 +3,37 @@ package com.graygzou
 import com.graygzou.Creatures.{Entity, Entity3D}
 import com.jme3.math.ColorRGBA
 
-class TeamEntities(color:ColorRGBA) {
+class TeamEntities(color:ColorRGBA, nbMember: Int) {
 
-  val teamColor: ColorRGBA = color
-  val teamScore: Int = 0
+  private val teamColor: ColorRGBA = color
+  private val teamScore: Int = 0
 
-  var aliveEntities: List[Entity3D] = List.empty
+  private var aliveEntities: Array[Entity] = new Array(nbMember)
+  private var actualCount: Int = 0
 
   def addEntity(entity: Entity): Unit = {
-    aliveEntities.::(entity)
+    aliveEntities(actualCount) = entity
+    actualCount += 1
   }
 
   def removeEntity(entity: Entity): Unit = {
     aliveEntities = aliveEntities.filter(e => !e.eq(entity)  )
   }
 
+  def getEntities(): Array[Entity] = {
+    return aliveEntities
+  }
+
   def countAliveEntity(): Int = {
-    return aliveEntities.length
+    return actualCount
+  }
+
+  def getTeamColor() : ColorRGBA = {
+    return teamColor
+  }
+
+  override def toString: String = {
+    return "{" + teamColor + ',' + teamScore + ", Members :" + actualCount + ',' + ',' + aliveEntities.filter(e => e != null).foreach(e => print(e.toString)) + "}"
   }
 
 }

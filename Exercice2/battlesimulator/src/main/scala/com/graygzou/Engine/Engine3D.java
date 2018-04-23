@@ -6,6 +6,7 @@
 package com.graygzou.Engine;
 
 import com.graygzou.Creatures.Entity;
+import com.graygzou.TeamEntities;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -54,24 +55,35 @@ public class Engine3D extends SimpleApplication {
         //game = new BattleSimulationCluster("Fight 1","local[*]");
 
         // You initialize game objects:
-        for(Entity currentEntity : game.screenEntities()) {
-            // Create the model of the entity
-            Spatial teapot = assetManager.loadModel("Models/Teapot/Teapot.obj");
+        for(TeamEntities currentTeam : game.screenTeams()) {
+            System.out.println(currentTeam.countAliveEntity());
+            for(int i = 0; i < currentTeam.countAliveEntity(); i++) {
+                //Current entity
+                Entity currentEntity = currentTeam.getEntities()[i];
 
-            // Place the entity in the world
-            teapot.setLocalTranslation(currentEntity.getCurrentPosition());
+                // Create the model of the entity
+                Spatial teapot = assetManager.loadModel("Models/Teapot/Teapot.obj");
 
-            // Set the scale and the rotation of the entity
-            teapot.setLocalScale(1, 1, 1); // TODO
+                System.out.println(currentEntity);
 
-            // Load and set the material
-            Material mat_default = new Material(
-                    assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");
-            //mat_default.setColor("Color", currentEntity.getTeam());
-            teapot.setMaterial(mat_default);
+                // Place the entity in the world
+                teapot.setLocalTranslation(currentEntity.getCurrentPosition());
 
-            // Attach the current entity to the rootNode
-            rootNode.attachChild(teapot);
+                // Set the scale and the rotation of the entity
+                teapot.setLocalScale(1, 1, 1); // TODO
+
+                // Load and set the material
+                /*Material mat_default = new Material(
+                        assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");*/
+                Material mat_default = new Material(assetManager,
+                        "Common/MatDefs/Misc/Unshaded.j3md");
+                System.out.println(currentTeam.getTeamColor());
+                mat_default.setColor("Color", currentTeam.getTeamColor());
+                teapot.setMaterial(mat_default);
+
+                // Attach the current entity to the rootNode
+                rootNode.attachChild(teapot);
+            }
         }
 
         // You initialize variables:

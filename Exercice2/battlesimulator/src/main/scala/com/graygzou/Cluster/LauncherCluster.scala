@@ -28,7 +28,6 @@ object LauncherCluster {
     // Second file : contains data about the relationship
     game.launchGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt")
 
-
     // Stop the simulation
     game.cleanScalaContext(sc)
 

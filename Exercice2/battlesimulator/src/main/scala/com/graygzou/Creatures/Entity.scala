@@ -10,7 +10,7 @@ package com.graygzou.Creatures
 
 import com.graygzou.Cluster.GameUtils
 import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
-import com.graygzou.{EntitiesRelationType, Team}
+import com.graygzou.{EntitiesRelationType, Team, TeamEntities}
 import com.jme3.math.Vector3f
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.{SparkConf, SparkContext}
@@ -130,7 +130,7 @@ class Entity(args: Array[String]) extends Serializable {
   // Functions that will be used for the simulation
 
   // Attack
-  def Attack(target:Entity, damages: Double): Unit =
+  def attack(target:Entity, damages: Double): Unit =
     println(s"I'm attacking ${target.toString} with the current damages $damages")
 
 
@@ -142,7 +142,7 @@ class Entity(args: Array[String]) extends Serializable {
     * @param y position on y axis
     * @param z position on z axis
     */
-  def Walk(x: Double, y: Double, z: Double): Unit =
+  def walk(x: Double, y: Double, z: Double): Unit =
     println(s"I'm walking to ($x $y $z) position")
 
   /**
@@ -153,7 +153,7 @@ class Entity(args: Array[String]) extends Serializable {
     * @param y position on y axis
     * @param z position on z axis
     */
-  def Hustle(x: Double, y: Double, z: Double): Unit =
+  def hustle(x: Double, y: Double, z: Double): Unit =
     println(s"I'm running to ($x $y $z) position")
 
   /**
@@ -163,7 +163,7 @@ class Entity(args: Array[String]) extends Serializable {
     * @param y position on y axis
     * @param z position on z axis
     */
-  def RunTimes3(x: Double, y: Double, z: Double): Unit =
+  def runTimes3(x: Double, y: Double, z: Double): Unit =
     println(s"I'm runningx3 to ($x $y $z) position")
 
   /**
@@ -173,7 +173,7 @@ class Entity(args: Array[String]) extends Serializable {
     * @param y position on y axis
     * @param z position on z axis
     */
-  def RunTimes4(x: Double, y: Double, z: Double): Unit =
+  def runTimes4(x: Double, y: Double, z: Double): Unit =
     println(s"I'm runningx4 to ($x $y $z) position")
 
 
