@@ -54,6 +54,7 @@ public class Engine3D extends SimpleApplication {
         // Create the regular graph
         game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", true);
         //game = new BattleSimulationCluster("Fight 1","local[*]");
+        gameEntities = new Spatial[game.screenEntities().length];
 
         // You initialize game objects:
         for(TeamEntities currentTeam : game.screenTeams()) {
@@ -64,27 +65,26 @@ public class Engine3D extends SimpleApplication {
                 Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
 
                 // Create the model of the entity
-                Spatial teapot = assetManager.loadModel("Models/Teapot/Teapot.obj");
-
-                System.out.println(currentEntity);
+                currentEntity.setModelPath("Models/Teapot/Teapot.obj");
+                Spatial current_spatial = assetManager.loadModel("Models/Teapot/Teapot.obj");
 
                 // Place the entity in the world
-                teapot.setLocalTranslation(currentEntity.getCurrentPosition());
+                current_spatial.setLocalTranslation(currentEntity.getCurrentPosition());
 
                 // Set the scale and the rotation of the entity
-                teapot.setLocalScale(1, 1, 1); // TODO
+                current_spatial.setLocalScale(1, 1, 1); // TODO better
 
-                // Load and set the material
-                /*Material mat_default = new Material(
-                        assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");*/
+                // Material setup
                 Material mat_default = new Material(assetManager,
                         "Common/MatDefs/Misc/Unshaded.j3md");
                 System.out.println(currentTeam.getTeamColor());
                 mat_default.setColor("Color", currentTeam.getTeamColor());
-                teapot.setMaterial(mat_default);
+                current_spatial.setMaterial(mat_default);
+
+                gameEntities[i] = current_spatial;
 
                 // Attach the current entity to the rootNode
-                rootNode.attachChild(teapot);
+                rootNode.attachChild(current_spatial);
             }
         }
 
