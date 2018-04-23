@@ -86,6 +86,7 @@ class Entity(args: Array[String]) extends Serializable {
     currentFly = args(11).toDouble
     ownHeal = args(12).toDouble
     ownHealRange = args(13).toDouble
+    currentHealth = 3
 
 
     //ownSpells = crawler.getSpellsByCreature(ownType)
@@ -181,19 +182,20 @@ class Entity(args: Array[String]) extends Serializable {
 
   override def toString: String =
     s"Type: $getType, Position: $getCurrentPosition, Team: $getTeam Health: $getHealth, " +
-      s"Armor: $getArmor, MeleeAttack: $getMeleeAttack (rg: $getMeleeAttackRange), RangeAttack: $getRangedAttack (rg: $getRangedAttackRange), Regeneration: $getRegeneration, Relations: ${getRelatedEntities.keySet}"
+      s"Armor: $getArmor, MeleeAttack: $getMeleeAttack (rg: $getMeleeAttackRange), RangeAttack: $getRangedAttack (rg: $getRangedAttackRange), Regeneration: $getRegeneration, Relations: ${getRelatedEntities.keySet}, hasPlayed: $turnDone"
 
 
   /**
-    * Find all the entities within 150ft and the closest enemy (can be farther than 150ft)
+    * Find all the entities within a range and the closest enemy
+    * @param range range of the search
     * @return tuple of the entities nearby and the closest enemy
     */
-  def searchEntitiesNearby() : (ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))], (VertexId, (Entity, EntitiesRelationType.Value))) = {
+  def searchEntitiesNearby(range: Double) : (ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))], (VertexId, (Entity, EntitiesRelationType.Value))) = {
     var nearbyEntities = new ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))]()
     var firstIteration = true
     var closestEnemy: (VertexId, (Entity, EntitiesRelationType.Value)) = null
     for(entity <- ownRelatedEntities){
-      if (entity._2._1.getCurrentPosition.distance(currentPosition) <= 150) {
+      if (entity._2._1.getCurrentPosition.distance(currentPosition) <= range) {
         nearbyEntities += entity
       }
       if (entity._2._2 == EntitiesRelationType.Enemy){
@@ -209,7 +211,6 @@ class Entity(args: Array[String]) extends Serializable {
     }
     (nearbyEntities, closestEnemy)
   }
-
 
   /**
     * @param nearbyEntities list of the entities close
@@ -240,22 +241,32 @@ class Entity(args: Array[String]) extends Serializable {
     (foundOne, allyId)
   }
 
-  def searchGoal(myVertexId: VertexId): Unit = {
+  /**
+    *
+    * @param myVertexId
+    * @param range
+    * @return Tuple with a boolean to know if a goal exists and vertexId of the closest enemy (except if the goal is
+    *         the entity itself)
+    */
+  def searchGoal(myVertexId: VertexId, range: Double): (Boolean, VertexId) = {
     /* Search a goal :
      *    - Priority 1 : heal yourself (HP under 40%)
      *    - Priority 2 : find the most wounded ally to heal (HP under 40% and ally can't be killed in 1-2 hits)
      *    - Priority 3 : attack closest enemy
     */
 
+    var goalFound = false
+    var result = (false, myVertexId)
     // Should the entity heal itself ?
     if (currentHealth <= 0.4*ownMaxHealth && hasHeal){
-        ownGoal = myVertexId
+      ownGoal = myVertexId
+      result = (true, myVertexId)
+      result
     } else {
       // Find all the entities nearby (150ft or less)
-      val entities = searchEntitiesNearby()
+      val entities = searchEntitiesNearby(range)
       val nearbyEntities = entities._1
       val closestEnemy = entities._2
-      var goalFound = false
 
       if (nearbyEntities.nonEmpty) {
         // Should the entity heal an ally ?
@@ -264,18 +275,45 @@ class Entity(args: Array[String]) extends Serializable {
           if (ally._1){
             goalFound = true
             ownGoal = ally._2
+            result = (true, closestEnemy._1)
           }
         }
         if(!goalFound){
+          goalFound = true
           ownGoal = closestEnemy._1
+          result = (true, closestEnemy._1)
         }
       } else {
         // Goal is the closest enemy
         ownGoal = closestEnemy._1
+        result = (true, closestEnemy._1)
       }
+      result
     }
   }
 
+
+  def computeDamages(baseDamage: Double): Float = {
+    //searchGoal(myVertexId)
+    val d20Dice = GameUtils.rollDice(20)
+    // Test, depending on the throw if the attack is successful.
+    d20Dice match {
+      case 1 => {
+        println("Miss ...")
+      }
+      case 20 => println("HIT ! Maybe critical ?")
+      case value => {
+        println(" Let's test.. ")
+        if (value + 10 > 20) {
+          println(" HIT ! ")
+        } else {
+          println("Miss ...")
+        }
+      }
+    }
+    var value = baseDamage.toFloat
+    value
+  }
 
   /**
     *
@@ -293,63 +331,61 @@ class Entity(args: Array[String]) extends Serializable {
   def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distance: Float): (VertexId, Double) = {
 
     var action = (-3L,0D)
+    val d20Dice = GameUtils.rollDice(20)
 
     if (!turnDone) {
       // Search a goal
-      searchGoal(myVertexId)
+      var potentialAllyInRange = false
+      var result = (false, 1L)
 
-      // The goal is the entity itself i.e. it will heal itself
-      if(ownGoal == myVertexId){
-        action = (myVertexId, ownHeal)
+      if (hasHeal) {
+        result = searchGoal(myVertexId, ownHealRange)
+        potentialAllyInRange = true
       } else {
+        result = searchGoal(myVertexId, ownRangedAttackRange)
+      }
 
-
-        if (itsVertexId == ownGoal){
-          // That's our goal, what should the entity do?
-          if(relationType == EntitiesRelationType.Ally){
-            // It's an ally, the entity should heal if its in range or move
-            if(distance <= ownHealRange){
-
+      if (result._1) {
+        // The goal is the entity itself i.e. it will heal itself
+        if (ownGoal == myVertexId) {
+          action = (myVertexId, ownHeal)
+          turnDone = true
+        } else {
+          if (itsVertexId == ownGoal) {
+            // That's our goal, what should the entity do?
+            if (relationType == EntitiesRelationType.Ally) {
+              // It's an ally, the entity should heal if it is in range
+              if (potentialAllyInRange) {
+                action = (ownGoal, ownHeal + GameUtils.rollDice(10))
+                turnDone = true
+              } else {
+                // Ally isn't in range, entity should try to attack the closest enemy if it is in range
+                ownGoal = result._2
+                if (itsVertexId == ownGoal && distance <= ownRangedAttackRange) {
+                  if (distance <= ownMeleeAttackRange) {
+                    action = (ownGoal, -computeDamages(ownMeleeAttack))
+                  } else {
+                    action = (ownGoal, -computeDamages(ownRangedAttack))
+                  }
+                  turnDone = true
+                }
+              }
+            } else {
+              // It's an enemy, let's attack
+              if (distance <= ownMeleeAttackRange) {
+                action = (ownGoal, -computeDamages(ownMeleeAttack))
+              } else {
+                action = (ownGoal, -computeDamages(ownRangedAttack))
+              }
+              turnDone = true
             }
           }
-
-
-
-
-        } else {
-          action = (ownGoal,0)
-        }
-
-      }
-
-
-
-      //searchGoal(myVertexId)
-      val d20Dice = GameUtils.rollDice(20)
-      // Test, depending on the throw if the attack is successful.
-      d20Dice match {
-        case 1 => {
-          println("Miss ...")
-        }
-        case 20 => println("HIT ! Maybe critical ?")
-        case value => {
-          println(" Let's test.. ")
-          if (value + 10 > 20) {
-            println(" HIT ! ")
-          } else {
-            println("Miss ...")
-          }
         }
       }
-      var value = 10
-
-      turnDone = true
-      // Return a positive value if the entity is an ally (=heal) or negative if it's an enemy (=damage)
-      if (relationType == EntitiesRelationType.Ally)
-        action = (ownGoal,value)
-      else
-        action = (ownGoal,-value)
     }
+    println("LEL - " + myVertexId +" : " + currentPosition.toString)
+    currentPosition.x += 1
+    println("LEL - " + myVertexId +" : " + currentPosition.toString)
     action
   }
 
