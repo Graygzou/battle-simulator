@@ -290,7 +290,7 @@ class Entity(args: Array[String]) extends Serializable {
       L'objectif sera mis dans une variable goal : VertexId
       On verifie dans le map que ce soit le bon objectif
    */
-  def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, distance: Float): (VertexId, Double) = {
+  def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distance: Float): (VertexId, Double) = {
 
     var action = (-3L,0D)
 
@@ -301,6 +301,25 @@ class Entity(args: Array[String]) extends Serializable {
       // The goal is the entity itself i.e. it will heal itself
       if(ownGoal == myVertexId){
         action = (myVertexId, ownHeal)
+      } else {
+
+
+        if (itsVertexId == ownGoal){
+          // That's our goal, what should the entity do?
+          if(relationType == EntitiesRelationType.Ally){
+            // It's an ally, the entity should heal if its in range or move
+            if(distance <= ownHealRange){
+
+            }
+          }
+
+
+
+
+        } else {
+          action = (ownGoal,0)
+        }
+
       }
 
 

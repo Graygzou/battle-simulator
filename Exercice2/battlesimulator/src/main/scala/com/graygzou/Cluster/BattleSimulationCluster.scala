@@ -166,18 +166,12 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
           val distance = entitySrc.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition)
           val relationType = triplet.attr.getType
 
-          val action = entitySrc.computeIA(relationType, triplet.srcId, distance)
+          val action = entitySrc.computeIA(relationType, triplet.srcId, triplet.dstId, distance)
 
-          if (distance <= entitySrc.getRangedAttackRange) {
-            val baseDamage = if (distance <= entitySrc.getMeleeAttackRange) entitySrc.getMeleeAttack else entitySrc.getRangedAttack
-            println("base dam: " + baseDamage)
-
-
-            //val resSrc = triplet.srcAttr.computeIA(relationType, triplet.srcId)
-            //if (resSrc != 0) {
-              //println("IA source: " + resSrc)
-              //triplet.sendToDst((resSrc, triplet.dstAttr))
-            //}
+          if (action._1 == triplet.srcId){
+            triplet.sendToSrc((action._2.toFloat, entitySrc))
+          } else if (action._1 == triplet.dstId) {
+            triplet.sendToDst((action._2.toFloat, triplet.dstAttr))
           }
         },
 
