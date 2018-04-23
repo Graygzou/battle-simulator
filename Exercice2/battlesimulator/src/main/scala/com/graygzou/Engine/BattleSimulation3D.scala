@@ -63,14 +63,23 @@ class BattleSimulation3D extends Serializable {
     * @param relationFile File that contains all the relation between entities.
     * @return The game graph will all the entities graph.
     */
-  private def setupGame(entitiesFile: String, relationFile: String) : Graph[Entity, Relation] = {
+  private def setupGame(entitiesFile: String, relationFile: String, visualization: Boolean) : Graph[Entity, Relation] = {
     NbTurnMax = 100  // Should be in the game.txt
 
-    // Load the first team data and parse into tuples of entity id and attribute list
     val entitiesPath = getClass.getResource(entitiesFile)
-    var gameEntities : RDD[(VertexId, Entity)] = sc.textFile(entitiesPath.getPath)
-      .map(line => line.split(","))
-      .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
+    var gameEntities : RDD[(VertexId, Entity)] = null
+    if(visualization) {
+      // Load the first team data and parse into tuples of entity id and attribute list
+
+      gameEntities = sc.textFile(entitiesPath.getPath)
+        .map(line => line.split(","))
+        .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity3D(parts.tail)))
+    } else {
+      // Load the first team data and parse into tuples of entity id and attribute list
+      gameEntities = sc.textFile(entitiesPath.getPath)
+        .map(line => line.split(","))
+        .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
+    }
 
     // Retrieve screen entities
     screenEntities = gameEntities.map(x => x._2).collect
@@ -148,7 +157,7 @@ class BattleSimulation3D extends Serializable {
     }
 
     // Init the first graph with
-    var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
+    var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile, true)
 
     GameUtils.printGraph(mainGraph)
 
