@@ -187,7 +187,7 @@ class BattleSimulation3D extends Serializable {
 
       GameUtils.printGraph(currentGraph)
 
-      var updatedEntities: VertexRDD[Entity] = playOneTurn(mainGraph)
+      var updatedEntities: VertexRDD[Entity] = playOneTurn(currentGraph)
 
       // Join the updated values to the graph
       currentGraph = currentGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)

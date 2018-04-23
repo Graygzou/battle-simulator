@@ -5,23 +5,32 @@
 
 package com.graygzou.Cluster
 
-import java.{io, util}
-
-import com.graygzou.{EntitiesRelationType, Relation, Team}
+import com.graygzou.{EntitiesRelationType, Relation, Team, TeamEntities}
 import com.graygzou.Creatures.Entity
+import com.jme3.math.ColorRGBA
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scala.collection.immutable.HashMap
-
 
 // To make some of the examples work we will also need RDD
 
-class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Serializable {
+class BattleSimulationCluster(appName: String, MasterURL: String) extends Serializable {
+
+  private val debug = false
+
+  // Init Scala Context
+  // Create the SparkConf and the SparkContext with the correct value
+  // Usefull for the 3D visualization
+  val conf = new SparkConf().setAppName(appName).setMaster(MasterURL)
+  val sc = new SparkContext(conf)
 
   // Dummy values
   var NbTurnMax = 0
+
+  // 3D Variables
+  var screenEntities: Array[Entity] = Array.empty
+  var screenTeams: Array[TeamEntities] = Array.empty
 
   /**
     * Method used to check the end of the fight
@@ -47,7 +56,7 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
   /**
     * Clean the application by closing the SparkContext
     */
-  def cleanScalaContext(sc: SparkContext): Unit = {
+  def cleanScalaContext(): Unit = {
     sc.stop()
   }
 
@@ -65,6 +74,26 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     var gameEntities : RDD[(VertexId, Entity)] = sc.textFile(entitiesPath.getPath)
       .map(line => line.split(","))
       .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
+
+    // Retrieve screen entities
+    screenEntities = gameEntities.map(x => x._2).collect
+
+    if(debug) {
+      println("Nb Entity: " + screenEntities.length)
+      screenEntities.foreach(e => println(e.toString))
+    }
+
+    // Create teams
+    screenEntities.foreach( e => {
+      println(e.getTeam.id)
+      screenTeams(e.getTeam.id).addEntity(e)
+    })
+
+    // count in teams
+    if(debug) {
+      println("Nb Team " + screenTeams.length)
+      screenTeams.foreach(t =>  println(t.toString))
+    }
 
     // Parse the edge data which is already in userId -> userId format
     // This graph represents possible interactions (hostiles or not) between entities.
@@ -97,8 +126,6 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     }
     gameEntities = sc.parallelize(updatedGameEntities)
 
-
-
     // Attach the users attributes
     /*
     val mainGraph: Graph[Entity, PartitionID] = relationGraph.outerJoinVertices(gameEntities) {
@@ -125,16 +152,32 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     * 3) Take damages left.
     * TODO
     */
-  def launchGame(entitiesFile: String, relationFile: String): Unit = {
+  def initGame(entitiesFile: String, relationFile: String): Graph[Entity, Relation] = {
 
-    // Init the first graph with
+    val nbTeam = 2 // Should be in the entitiesFile or another.
+    val TeamsNbMembers = Array(100, 100) // also
+
+    // Create all the teams
+    screenTeams = new Array(nbTeam)
+    for (i <- 0 to (nbTeam - 1)) {
+      screenTeams(i) = new TeamEntities(ColorRGBA.randomColor(), TeamsNbMembers(i))
+    }
+
+    // Setup the first graph with given files
     var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
 
     GameUtils.printGraph(mainGraph)
 
+    return mainGraph
+  }
+
+  def gameloop(mainGraph: Graph[Entity, Relation]): Int = {
+
     // Extract all the team size and store them in a structure
     var teamMember = countTeamMember(mainGraph)
     var currentTurn = 0
+
+    var currentGraph = mainGraph
 
     // --------------
     // Gameloop
@@ -144,68 +187,20 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     while (teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax) {
       println("Turn n°" + currentTurn)
 
-      GameUtils.printGraph(mainGraph)
+      GameUtils.printGraph(currentGraph)
 
-      // ---------------------------------
-      // Execute a turn of the game
-      // ---------------------------------
-      val playOneTurn: VertexRDD[(Float, Entity)] = mainGraph.aggregateMessages[(Float, Entity)](
-        /**
-          * SendMsg function
-          * -- Should check if the opponents are aware of him (surprise round)
-          * 2) Move around
-          * 3) Attacks msg (random + attack > armor => attack) or Do nothin
-          * 4) Heal msg
-          * 5) Move around
-          * // TODO Should check if the two node are aware of each others.
-          */
-        // Map Function : Send message (Src -> Dest) and (Dest -> Src)
-        // Attention : If called, this method need to be executed in the Serialize class
-        triplet => {
-          val entitySrc = triplet.srcAttr
-          val distance = entitySrc.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition)
-          val relationType = triplet.attr.getType
-
-          val action = entitySrc.computeIA(relationType, triplet.srcId, triplet.dstId, distance)
-
-          if (action._1 == triplet.srcId){
-            triplet.sendToSrc((action._2.toFloat, entitySrc))
-          } else if (action._1 == triplet.dstId) {
-            triplet.sendToDst((action._2.toFloat, triplet.dstAttr))
-          }
-        },
-
-        // Reduce Function : Received message
-        (a, b) => {
-          (a._1 + b._1, a._2)
-        }
-      )
-
-      // Update the entities health points with corresponding messages (heals or attacks)
-      val updateEntity = (id: VertexId, value : (Float, Entity)) => {
-        value match { case (amountAction, entity) =>
-          //if(amountAction != 0) {
-            print("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
-            entity.takeDamages(amountAction)
-            println(entity.getHealth + "hp)")
-         // }
-          entity
-        }
-      }
-
-      val updatedEntities = playOneTurn.mapValues(updateEntity)
-      updatedEntities.collect.foreach(println(_))
+      var updatedEntities: VertexRDD[Entity] = playOneTurn(currentGraph)
 
       // Join the updated values to the graph
-      mainGraph = mainGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
+      currentGraph = currentGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
 
       // Filter all the dead entities from the graph
-      mainGraph = mainGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
-      mainGraph.vertices.collect.foreach(println(_))
+      currentGraph = currentGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
+      currentGraph.vertices.collect.foreach(println(_))
       Thread.sleep(5000)
 
       // the team size based on the graph
-      teamMember = countTeamMember(mainGraph)
+      teamMember = countTeamMember(currentGraph)
 
       currentTurn += 1
     }
@@ -221,6 +216,8 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
         println("You are both dead !! HAHAHAHA")
       }
     }
+
+    return currentTurn
 
     // Gameloop
     // While their is still a link between Team1 and Team2
@@ -269,4 +266,91 @@ class BattleSimulationCluster(conf: SparkConf, sc: SparkContext) extends Seriali
     println(userInfoWithPageRank.vertices.top(5)(Ordering.by(_._2._1)).mkString("\n"))
     */
   }
+
+
+  def playOneTurn(mainGraph: Graph[Entity, Relation]): VertexRDD[Entity] = {
+    // ---------------------------------
+    // Execute a turn of the game
+    // ---------------------------------
+    val playOneTurn: VertexRDD[(Float, Entity)] = mainGraph.aggregateMessages[(Float, Entity)](
+      /**
+        * SendMsg function
+        * -- Should check if the opponents are aware of him (surprise round)
+        * 2) Move around
+        * 3) Attacks msg (random + attack > armor => attack) or Do nothin
+        * 4) Heal msg
+        * 5) Move arounddef initGame(entitiesFile: String, relationFile: String): Unit = {
+        *
+        * val nbTeam = 2 // Should be in the entitiesFile or another.
+        * val TeamsNbMembers = Array(100, 100) // also
+        *
+        * // Create all the teams
+        * screenTeams = new Array(nbTeam)
+        * for(i <- 0 to (nbTeam-1)) {
+        * screenTeams(i) = new TeamEntities(ColorRGBA.randomColor(), TeamsNbMembers(i))
+        * }
+        *
+        * // Init the first graph with
+        * var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
+        *
+        *     GameUtils.printGraph(mainGraph)
+        *
+        * // play the game
+        * /*
+        * val currentTurn = gameloop(mainGraph)
+        *
+        * println("The fight is done.")
+        * if(currentTurn >= NbTurnMax) {
+        * println("It's a tie !")
+        * } else {
+        * val entitiesLeft = mainGraph.vertices.collect()
+        * if(entitiesLeft.length > 0) {
+        * println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
+        * } else {
+        * println("You are both dead !! HAHAHAHA")
+        * }
+        * }*/
+        * }
+        * // TODO Should check if the two node are aware of each others.
+        */
+      // Map Function : Send message (Src -> Dest) and (Dest -> Src)
+      // Attention : If called, this method need to be executed in the Serialize class
+      triplet => {
+        val entitySrc = triplet.srcAttr
+        val distance = entitySrc.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition)
+        val relationType = triplet.attr.getType
+
+        val action = entitySrc.computeIA(relationType, triplet.srcId, triplet.dstId, distance)
+
+        if (action._1 == triplet.srcId){
+          triplet.sendToSrc((action._2.toFloat, entitySrc))
+        } else if (action._1 == triplet.dstId) {
+          triplet.sendToDst((action._2.toFloat, triplet.dstAttr))
+        }
+      },
+
+      // Reduce Function : Received message
+      (a, b) => {
+        (a._1 + b._1, a._2)
+      }
+    )
+
+    // Update the entities health points with corresponding messages (heals or attacks)
+    val updateEntity = (id: VertexId, value : (Float, Entity)) => {
+      value match { case (amountAction, entity) =>
+        //if(amountAction != 0) {
+        print("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
+        entity.takeDamages(amountAction)
+        println(entity.getHealth + "hp)")
+        // }
+        entity
+      }
+    }
+
+    val updatedEntities = playOneTurn.mapValues(updateEntity)
+    updatedEntities.collect.foreach(println(_))
+
+    return updatedEntities
+  }
+
 }
