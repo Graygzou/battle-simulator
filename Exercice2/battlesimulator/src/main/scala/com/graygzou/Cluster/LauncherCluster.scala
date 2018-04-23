@@ -23,7 +23,7 @@ object LauncherCluster {
     //
     // First file : contains data about the entities
     // Second file : contains data about the relationship
-    val mainGraph = game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt")
+    val mainGraph = game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", false)
 
     //
     // Start the gameloop to play the simulation

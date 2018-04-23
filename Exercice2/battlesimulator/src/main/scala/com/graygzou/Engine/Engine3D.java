@@ -17,7 +17,6 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 
 // Custom graphe imports
-import com.graygzou.Engine.BattleSimulation3D;
 
 /** This class call the JME3 engine to render the fight in 3D
  * It has to be in Java since the engine need specific method
@@ -53,7 +52,7 @@ public class Engine3D extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         // Create the regular graph
-        game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt");
+        game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", true);
         //game = new BattleSimulationCluster("Fight 1","local[*]");
 
         // You initialize game objects:
@@ -61,6 +60,7 @@ public class Engine3D extends SimpleApplication {
             System.out.println(currentTeam.countAliveEntity());
             for(int i = 0; i < currentTeam.countAliveEntity(); i++) {
                 //Current entity
+                System.out.println(currentTeam.getEntities()[i].getType());
                 Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
 
                 // Create the model of the entity
