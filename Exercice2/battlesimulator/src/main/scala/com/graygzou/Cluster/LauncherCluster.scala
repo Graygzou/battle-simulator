@@ -5,8 +5,6 @@
 
 package com.graygzou.Cluster
 
-import org.apache.spark.{SparkConf, SparkContext}
-
 object LauncherCluster {
 
   /**
@@ -15,21 +13,27 @@ object LauncherCluster {
     */
   def main(args: Array[String]): Unit = {
 
-    // Init Scala Context
-    // Create the SparkConf and the SparkContext with the correct value
-    val conf = new SparkConf().setAppName("Fight 1").setMaster("local[1]")
-    val sc = new SparkContext(conf)
-
+    //
     // Init basic variables
-    val game = new BattleSimulationCluster(conf, sc)
+    //
+    val game = new BattleSimulationCluster("Fight 1", "local[1]")
 
+    //
     // Launch the simulation with the correct files
+    //
     // First file : contains data about the entities
     // Second file : contains data about the relationship
-    game.launchGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt")
+    val mainGraph = game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt")
 
+    //
+    // Start the gameloop to play the simulation
+    //
+    game.gameloop(mainGraph)
+
+    //
     // Stop the simulation
-    game.cleanScalaContext(sc)
+    //
+    game.cleanScalaContext()
 
   }
 

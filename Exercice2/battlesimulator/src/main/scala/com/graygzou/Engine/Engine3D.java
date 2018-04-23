@@ -5,7 +5,9 @@
 
 package com.graygzou.Engine;
 
+import com.graygzou.Cluster.BattleSimulationCluster;
 import com.graygzou.Creatures.Entity;
+import com.graygzou.Creatures.Entity3D;
 import com.graygzou.TeamEntities;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
@@ -22,14 +24,14 @@ import com.graygzou.Engine.BattleSimulation3D;
  * */
 public class Engine3D extends SimpleApplication {
 
-    private BattleSimulation3D game;
+    private BattleSimulationCluster game;
 
     protected Geometry player;
 
     private Spatial[] gameEntities;
 
     public Engine3D() {
-        game = new BattleSimulation3D();
+        game = new BattleSimulationCluster("Fight1", "local[1]");
     }
 
     /**
@@ -59,7 +61,7 @@ public class Engine3D extends SimpleApplication {
             System.out.println(currentTeam.countAliveEntity());
             for(int i = 0; i < currentTeam.countAliveEntity(); i++) {
                 //Current entity
-                Entity currentEntity = currentTeam.getEntities()[i];
+                Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
 
                 // Create the model of the entity
                 Spatial teapot = assetManager.loadModel("Models/Teapot/Teapot.obj");
@@ -112,6 +114,9 @@ public class Engine3D extends SimpleApplication {
     public void simpleUpdate(float tpf) {
         // tpf : time par frame
 
+        for(Entity currentEntity : game.screenEntities()) {
+            //currentEntity.
+        }
         //player.rotate(0, 2*tpf, 0);
 
     }
