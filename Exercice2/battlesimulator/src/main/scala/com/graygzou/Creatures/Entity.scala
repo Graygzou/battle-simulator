@@ -31,10 +31,12 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownType = ""
   private var currentHealth = 0.0
   private var ownArmor = 0.0 // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
-  private var ownMeleeAttack = 0.0
+  private var ownMeleeAttackDamage = 0.0
   private var ownMeleeAttackRange = 0.0
-  private var ownRangedAttack = 0.0
+  private var ownMeleeAttackPrecision = 0.0
+  private var ownRangedAttackDamage = 0.0
   private var ownRangedAttackRange = 0.0
+  private var ownRangedAttackPrecision = 0.0
   private var ownRegeneration = 0.0
   var turnDone = false
 
@@ -54,14 +56,14 @@ class Entity(args: Array[String]) extends Serializable {
 
   private var ownRelatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
   private var ownMaxHealth = 0.0
-  private var ownGoal : VertexId = _
+  private var ownGoal : (VertexId,Entity)  = _
 
   // Used to make the agent move in the game
   //var steeringBehaviorModule = new SteeringBehavior()
 
   // no arguments constructor.
   def this() {
-    this(Array("1","dummy","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0",""))
+    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0",""))
   }
 
   // Function that initialize class members
@@ -71,19 +73,23 @@ class Entity(args: Array[String]) extends Serializable {
     ownMaxHealth = args(2).toDouble
     currentHealth = args(2).toDouble
     ownArmor = args(3).toDouble
-    ownMeleeAttack = args(4).toDouble
+    ownMeleeAttackDamage = args(4).toDouble
     ownMeleeAttackRange = args(5).toDouble
-    ownRangedAttack = args(6).toDouble
-    ownRangedAttackRange = args(7).toDouble
-    ownRegeneration = args(8).toDouble
+    ownMeleeAttackPrecision = args(6).toDouble
+
+    ownRangedAttackDamage = args(7).toDouble
+    ownRangedAttackRange = args(8).toDouble
+    ownRangedAttackPrecision = args(9).toDouble
+
+    ownRegeneration = args(10).toDouble
     // Special case for position
-    currentPosition = retrievePosition(args(9))
-    ownMaxSpeed = args(10).toDouble
-    currentSpeed = args(10).toDouble
-    ownMaxFly = args(11).toDouble
-    currentFly = args(11).toDouble
-    ownHeal = args(12).toDouble
-    ownHealRange = args(13).toDouble
+    currentPosition = retrievePosition(args(11))
+    ownMaxSpeed = args(12).toDouble
+    currentSpeed = args(12).toDouble
+    ownMaxFly = args(13).toDouble
+    currentFly = args(13).toDouble
+    ownHeal = args(14).toDouble
+    ownHealRange = args(15).toDouble
 
 
     //ownSpells = crawler.getSpellsByCreature(ownType)
@@ -102,15 +108,17 @@ class Entity(args: Array[String]) extends Serializable {
   def getType: String = ownType
   def getHealth: Double = currentHealth
   def getArmor: Double = ownArmor
-  def getMeleeAttack: Double = ownMeleeAttack
+  def getMeleeAttackDamage: Double = ownMeleeAttackDamage
   def getMeleeAttackRange: Double = ownMeleeAttackRange
-  def getRangedAttack: Double = ownRangedAttack
+  def getMeleeAttackPrecision: Double = ownMeleeAttackPrecision
+  def getRangedAttackDamage: Double = ownRangedAttackDamage
   def getRangedAttackRange: Double = ownRangedAttackRange
+  def getRangedAttackPrecision: Double = ownRangedAttackPrecision
   def getRegeneration: Double = ownRegeneration
   def getSpells: ArrayBuffer[String] = ownSpells
   def getRelatedEntities: HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = ownRelatedEntities
   def getMaxHealth: Double = ownMaxHealth
-  def getGoal: VertexId = ownGoal
+  def getGoal: (VertexId,Entity) = ownGoal
   def getMaxSpeed: Double = ownMaxSpeed
   def getCurrentSpeed: Double = currentSpeed
   def getMaxFly: Double = ownMaxFly
@@ -131,6 +139,16 @@ class Entity(args: Array[String]) extends Serializable {
   def resetSpeed(): Unit = {
     currentSpeed = ownMaxSpeed
     currentFly = ownMaxFly
+  }
+
+  def updateRelatedEntities(): Unit ={
+    var relatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
+    for (entity <- ownRelatedEntities){
+      if (entity._2._1.getHealth > 0){
+        relatedEntities += entity
+      }
+    }
+    ownRelatedEntities = relatedEntities
   }
 
   def addRelativeEntity(vertexId: VertexId, entity: Entity, relation: EntitiesRelationType.Value): Unit = {
@@ -190,7 +208,7 @@ class Entity(args: Array[String]) extends Serializable {
 
   override def toString: String =
     s"Type: $getType, Position: $getCurrentPosition, Team: $getTeam Health: $getHealth, " +
-      s"Armor: $getArmor, MeleeAttack: $getMeleeAttack (rg: $getMeleeAttackRange), RangeAttack: $getRangedAttack (rg: $getRangedAttackRange), Regeneration: $getRegeneration, Relations: ${getRelatedEntities.keySet}, hasPlayed: $turnDone"
+      s"Armor: $getArmor, MeleeAttack: $getMeleeAttackDamage (rg: $getMeleeAttackRange), RangeAttack: $getRangedAttackDamage (rg: $getRangedAttackRange), Regeneration: $getRegeneration, Relations: ${getRelatedEntities.keySet}"
 
 
   /**
@@ -226,21 +244,21 @@ class Entity(args: Array[String]) extends Serializable {
     * @param minPercentage under what % of the maxHP should an entity be considered worth to be healed
     * @return tuple with a boolean (true if someone should be healed) and the entity
     */
-  def findMostWoundedAlly(nearbyEntities: ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))], minHealth: Double, minPercentage: Double ):(Boolean, VertexId) = {
+  def findMostWoundedAlly(nearbyEntities: ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))], minHealth: Double, minPercentage: Double ):(Boolean, (VertexId,Entity)) = {
     var foundOne = false
     var ally: (VertexId, (Entity, EntitiesRelationType.Value)) = (0L,(this, EntitiesRelationType.Ally))
-    var allyId: VertexId = 0L
+    var allyId: (VertexId,Entity) = (0L, this)
     for (entity <- nearbyEntities){
       if (entity._2._2 == EntitiesRelationType.Ally){
         if (entity._2._1.getHealth <= minPercentage*entity._2._1.getMaxHealth && entity._2._1.getMaxHealth >= minHealth) {
           if(!foundOne){
             ally = entity
-            allyId = entity._1
+            allyId = (entity._1,entity._2._1)
             foundOne = true
           } else {
             if(entity._2._1.getHealth < ally._2._1.getHealth){
               ally = entity
-              allyId = entity._1
+              allyId = (entity._1,entity._2._1)
             }
           }
         }
@@ -260,7 +278,7 @@ class Entity(args: Array[String]) extends Serializable {
     * @return Tuple with a boolean to know if a goal exists and vertexId of the closest enemy (except if the goal is
     *         the entity itself)
     */
-  def searchGoal(myVertexId: VertexId, range: Double): (Boolean, VertexId) = {
+  def searchGoal(myVertexId: VertexId, range: Double): (Boolean, (VertexId, Entity)) = {
     /* Search a goal :
      *    - Priority 1 : heal yourself (HP under 40%)
      *    - Priority 2 : find the most wounded ally to heal (HP under 40% and ally can't be killed in 1-2 hits)
@@ -268,11 +286,11 @@ class Entity(args: Array[String]) extends Serializable {
     */
 
     var goalFound = false
-    var result = (false, myVertexId)
+    var result = (false, (myVertexId,this))
     // Should the entity heal itself ?
     if (currentHealth <= 0.4*ownMaxHealth && hasHeal){
-      ownGoal = myVertexId
-      result = (true, myVertexId)
+      ownGoal = (myVertexId, this)
+      result = (true, (myVertexId,this))
       result
     } else {
       // Find all the entities nearby
@@ -287,44 +305,98 @@ class Entity(args: Array[String]) extends Serializable {
           if (ally._1){
             goalFound = true
             ownGoal = ally._2
-            result = (true, closestEnemy._1)
+            result = (true, (closestEnemy._1,closestEnemy._2._1))
           }
         }
         if(!goalFound){
           goalFound = true
-          ownGoal = closestEnemy._1
-          result = (true, closestEnemy._1)
+          ownGoal = (closestEnemy._1, closestEnemy._2._1)
+          result = (true, (closestEnemy._1,closestEnemy._2._1))
         }
       } else {
         // Goal is the closest enemy
-        ownGoal = closestEnemy._1
-        result = (true, closestEnemy._1)
+        ownGoal = (closestEnemy._1, closestEnemy._2._1)
+        result = (false, (closestEnemy._1,closestEnemy._2._1))
       }
+      if (myVertexId == 15L) println(myVertexId + " TARGET : " + ownGoal._1 + " ("+ownGoal._2.getHealth+")")
+
       result
     }
   }
 
 
-  def computeDamages(baseDamage: Double): Float = {
-    //searchGoal(myVertexId)
+  def computeDamages(baseDamage: Double, precision: Double): Float = {
+
     val d20Dice = GameUtils.rollDice(20)
+    var damages = 0.0
     // Test, depending on the throw if the attack is successful.
     d20Dice match {
-      case 1 => {
-        println("Miss ...")
-      }
-      case 20 => println("HIT ! Maybe critical ?")
-      case value => {
-        println(" Let's test.. ")
-        if (value + 10 > 20) {
-          println(" HIT ! ")
+      case 1 =>
+        //println("Miss ...")
+
+      case 20 =>
+        val d1 = GameUtils.rollDice(6)
+        val d2 = GameUtils.rollDice(6)
+        val d3 = GameUtils.rollDice(6)
+        damages = baseDamage + d1 + d2 + d3
+
+      case value =>
+        //println(" Let's test.. ")
+        if (value +  precision > ownGoal._2.getArmor) {
+          //println(" HIT ! ")
+          val d1 = GameUtils.rollDice(6)
+          val d2 = GameUtils.rollDice(6)
+          damages = baseDamage + d1 + d2
         } else {
-          println("Miss ...")
+          //println("Miss ... Value="+value+" precision="+precision+" // armor="+ownGoal._2.getArmor)
         }
-      }
     }
-    var value = baseDamage.toFloat
-    value
+    damages.toFloat
+  }
+
+  /**
+    * Move the entity towards it's goal
+    */
+  def moveToGoal(): Unit = {
+
+    val targetPos = ownGoal._2.currentPosition
+
+    val distance = targetPos.distance(currentPosition)
+    val d = if (currentSpeed > distance) (currentSpeed-distance).toFloat else currentSpeed.toFloat
+
+    val deltaX = targetPos.x - currentPosition.x
+    val deltaY = targetPos.y - currentPosition.y
+
+    var newDeltaX = deltaX
+    var newDeltaY = deltaY
+
+    if (deltaX == 0 && deltaY != 0){
+      newDeltaY = if (deltaY < 0) -d else d
+
+    } else if (deltaY == 0 && deltaY != 0) {
+      newDeltaX = if (deltaX < 0) -d else d
+
+    } else if (deltaX != 0 && deltaY != 0) {
+      /* Linear function :  deltaY    = a * deltaX
+     *                    newDeltaY = a * newDeltaX
+     * Pythagore : d² = newDeltaX² + newDeltaY² = newDeltaX² * (a²+1)
+     *
+     * => newDeltaX = d / sqrt(a²+1)
+     */
+
+      // Compute new coordonates
+      val a = deltaY / deltaX
+      newDeltaX = (d / Math.sqrt(a * a + 1)).toFloat
+      newDeltaY = newDeltaX * a
+
+      if (deltaX > 0) newDeltaX = Math.abs(newDeltaX) else newDeltaX = -Math.abs(newDeltaX)
+      if (deltaY > 0) newDeltaY = Math.abs(newDeltaY)  else newDeltaY = -Math.abs(newDeltaY)
+    }
+
+    // Update entity
+    currentPosition.x += newDeltaX
+    currentPosition.y += newDeltaY
+    currentSpeed -= d
   }
 
   /**
@@ -340,58 +412,94 @@ class Entity(args: Array[String]) extends Serializable {
       L'objectif sera mis dans une variable goal : VertexId
       On verifie dans le map que ce soit le bon objectif
    */
-  def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distance: Float): (VertexId, Double) = {
+  def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distanceInit: Float): (VertexId, Double) = {
 
     var action = (-3L,0D)
+    var distance = distanceInit
+    updateRelatedEntities()
 
     if (!turnDone) {
       // Search a goal
       var potentialAllyInRange = false
-      var result = (false, 1L)
+      var result: (Boolean,(VertexId,Entity)) = (false, (1L,this))
 
       if (hasHeal) {
-        result = searchGoal(myVertexId, ownHealRange)
+        result = searchGoal(myVertexId, ownHealRange + currentSpeed)
         potentialAllyInRange = true
       } else {
-        result = searchGoal(myVertexId, ownRangedAttackRange)
+        result = searchGoal(myVertexId, ownRangedAttackRange + currentSpeed)
       }
 
       if (result._1) {
         // The goal is the entity itself i.e. it will heal itself
-        if (ownGoal == myVertexId) {
+        if (ownGoal._1 == myVertexId) {
           action = (myVertexId, ownHeal + GameUtils.rollDice(10))
           turnDone = true
         } else {
-          if (itsVertexId == ownGoal) {
+          if (itsVertexId == ownGoal._1) {
             // That's our goal, what should the entity do?
             if (relationType == EntitiesRelationType.Ally) {
               // It's an ally, the entity should heal if it is in range
-              if (potentialAllyInRange) {
-                action = (ownGoal, ownHeal + GameUtils.rollDice(10))
+              if (distance < ownHealRange) {
+                action = (ownGoal._1, ownHeal + GameUtils.rollDice(10))
+                turnDone = true
+              } else if (potentialAllyInRange){
+                // Ally can be reached with movement
+                moveToGoal()
+                distance = currentPosition.distance(ownGoal._2.currentPosition)
+                action = (ownGoal._1, ownHeal + GameUtils.rollDice(10))
                 turnDone = true
               } else {
                 // Ally isn't in range, entity should try to attack the closest enemy if it is in range
                 ownGoal = result._2
-                if (itsVertexId == ownGoal && distance <= ownRangedAttackRange) {
-                  if (distance <= ownMeleeAttackRange) {
-                    action = (ownGoal, -computeDamages(ownMeleeAttack))
+                if (itsVertexId == ownGoal._1 && distance <= ownRangedAttackRange + currentSpeed) {
+
+                  if (distance <= ownRangedAttackRange) {
+                    // No need to move for a ranged attack but can we melee with a move?
+                    if (distance <= ownMeleeAttackRange) {
+                      action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                    } else if (distance <= ownMeleeAttackRange + currentSpeed) {
+                      moveToGoal()
+                      distance = currentPosition.distance(ownGoal._2.currentPosition)
+                      action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                    }
+                    // Can't melee, so ranged attack
+                    action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
                   } else {
-                    action = (ownGoal, -computeDamages(ownRangedAttack))
+                    // Move and attack
+                    moveToGoal()
+                    distance = currentPosition.distance(ownGoal._2.currentPosition)
+                    action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
                   }
                   turnDone = true
                 }
               }
             } else {
               // It's an enemy, let's attack
-              if (distance <= ownMeleeAttackRange) {
-                action = (ownGoal, -computeDamages(ownMeleeAttack))
+              if (distance <= ownRangedAttackRange) {
+                // No need to move for a ranged attack but can we melee with a move?
+                if (distance <= ownMeleeAttackRange) {
+                  action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                } else if (distance <= ownMeleeAttackRange + currentSpeed) {
+                  moveToGoal()
+                  distance = currentPosition.distance(ownGoal._2.currentPosition)
+                  action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                }
+                // Can't melee, so ranged attack
+                action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
               } else {
-                action = (ownGoal, -computeDamages(ownRangedAttack))
+                // Move and attack
+                moveToGoal()
+                distance = currentPosition.distance(ownGoal._2.currentPosition)
+                action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
               }
               turnDone = true
             }
           }
         }
+      } else {
+        moveToGoal()
+        distance = currentPosition.distance(ownGoal._2.currentPosition)
       }
     }
     action

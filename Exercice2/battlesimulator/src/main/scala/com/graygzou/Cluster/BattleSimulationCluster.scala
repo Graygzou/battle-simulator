@@ -178,7 +178,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
     GameUtils.printGraph(mainGraph)
 
-    return mainGraph
+    mainGraph
   }
 
   def gameloop(mainGraph: Graph[Entity, Relation]): Int = {
@@ -197,7 +197,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     while (teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax) {
       println("Turn n°" + currentTurn)
 
-      GameUtils.printGraph(currentGraph)
+      //GameUtils.printGraph(currentGraph)
 
       var updatedEntities: VertexRDD[Entity] = playOneTurn(currentGraph)
 
@@ -207,7 +207,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       // Filter all the dead entities from the graph
       currentGraph = currentGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
       currentGraph.vertices.collect.foreach(println(_))
-      Thread.sleep(5000)
+      Thread.sleep(1000)
 
       // the team size based on the graph
       teamMember = countTeamMember(currentGraph)
@@ -219,7 +219,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     if(currentTurn >= NbTurnMax) {
       println("It's a tie !")
     } else {
-      val entitiesLeft = mainGraph.vertices.collect()
+      val entitiesLeft = currentGraph.vertices.collect()
       if(entitiesLeft.length > 0) {
         println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
       } else {
@@ -227,7 +227,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       }
     }
 
-    return currentTurn
+    currentTurn
 
     // Gameloop
     // While their is still a link between Team1 and Team2
@@ -361,13 +361,14 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
         entity.resetSpeed()
         entity.regenerate()
         entity.fixHealth()
+        entity.updateRelatedEntities()
 
         entity
       }
     }
 
     val updatedEntities = playOneTurn.mapValues(updateEntity)
-    updatedEntities.collect.foreach(println(_))
+    //updatedEntities.collect.foreach(println(_))
     updatedEntities
   }
 
