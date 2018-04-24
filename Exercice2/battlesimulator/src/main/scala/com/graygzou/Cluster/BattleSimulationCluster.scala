@@ -165,7 +165,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
   def initGame(entitiesFile: String, relationFile: String, visualization: Boolean): Graph[Entity, Relation] = {
 
     val nbTeam = 2 // Should be in the entitiesFile or another.
-    val TeamsNbMembers = Array(100, 100) // also
+    val TeamsNbMembers = Array(220, 220) // also
 
     // Create all the teams
     screenTeams = new Array(nbTeam)

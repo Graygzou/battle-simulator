@@ -99,6 +99,12 @@ class Entity(args: Array[String]) extends Serializable {
     ownHeal = args(15).toDouble
     ownHealRange = args(16).toDouble
 
+    // if no range attack, replace stats with melee (or we should rewrite AI)
+    if (ownRangedAttackRange == 0){
+      ownRangedAttackDamage = ownMeleeAttackDamage
+      ownRangedAttackRange = ownMeleeAttackRange
+      ownRangedAttackPrecision = ownMeleeAttackPrecision
+    }
 
     //ownSpells = crawler.getSpellsByCreature(ownType)
 
@@ -330,7 +336,7 @@ class Entity(args: Array[String]) extends Serializable {
         ownGoal = (closestEnemy._1, closestEnemy._2._1)
         result = (false, (closestEnemy._1,closestEnemy._2._1))
       }
-      println(myVertexId + " TARGET : " + ownGoal._1 + " ("+ownGoal._2.getHealth+")")
+      //println(myVertexId + " TARGET : " + ownGoal._1 + " ("+ownGoal._2.getHealth+")")
 
       result
     }
@@ -440,15 +446,15 @@ class Entity(args: Array[String]) extends Serializable {
     updateRelatedEntities()
 
 
-    // If the entity is Good+ at flying, we should fly for better speed and avoid melee attacks
-    if ((ownFlyParams.maneuverability == FlyQuality.Good || ownFlyParams.maneuverability == FlyQuality.Perfect) && currentPosition.z != 10){
+    // If the entity is Good+ at flying and has range attack, we should fly for better speed and avoid melee attacks + throwing axes
+    if ((ownFlyParams.maneuverability == FlyQuality.Good || ownFlyParams.maneuverability == FlyQuality.Perfect) && ownRangedAttackRange > 15 && currentPosition.z != 15){
       if (ownFlyParams.maneuverability == FlyQuality.Good ){
-        currentFly -= 20
+        currentFly -= 30
       } else {
-        currentFly -= 10
+        currentFly -= 15
       }
       flying = true
-      currentPosition.z = 10
+      currentPosition.z = 15
     }
 
 
