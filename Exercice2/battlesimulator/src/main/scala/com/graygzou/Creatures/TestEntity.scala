@@ -15,8 +15,8 @@ object TestEntity {
     printf("Name of the monster %s\n", monster1.getType)
     printf("Health %f\n", monster1.getHealth)
     printf("Armor %f\n", monster1.getArmor)
-    printf("MeleeAttack %f\n", monster1.getMeleeAttack)
-    printf("RangeAttack %f\n", monster1.getRangedAttack)
+    printf("MeleeAttack %f\n", monster1.getMeleeAttackDamage)
+    printf("RangeAttack %f\n", monster1.getRangedAttackDamage)
     printf("Regeneration %f\n", monster1.getRegeneration)
     //println("Spells " + monster1.getSpells)
     print("\n")
@@ -26,8 +26,8 @@ object TestEntity {
     printf("Name of the monster %s\n", monster2.getType)
     printf("Health %f\n", monster2.getHealth)
     printf("Armor %f\n", monster2.getArmor)
-    printf("MeleeAttack %f\n", monster1.getMeleeAttack)
-    printf("RangeAttack %f\n", monster1.getRangedAttack)
+    printf("MeleeAttack %f\n", monster1.getMeleeAttackDamage)
+    printf("RangeAttack %f\n", monster1.getRangedAttackDamage)
     printf("Regeneration %f\n", monster2.getRegeneration)
 
   }

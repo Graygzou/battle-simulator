@@ -33,10 +33,12 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownArmor = 0.0 // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
   private var ownMeleeAttackDamage = 0.0
   private var ownMeleeAttackRange = 0.0
-  private var ownMeleeAttackPrecision = 0.0
+  private var ownMeleeAttackPrecision: Array[Double] = _
+  private var ownNumberMelee = 0
   private var ownRangedAttackDamage = 0.0
   private var ownRangedAttackRange = 0.0
-  private var ownRangedAttackPrecision = 0.0
+  private var ownRangedAttackPrecision: Array[Double] = _
+  private var ownNumberRange = 0
   private var ownRegeneration = 0.0
   var turnDone = false
 
@@ -45,6 +47,7 @@ class Entity(args: Array[String]) extends Serializable {
   private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
   private var ownMaxSpeed = 0.0
   private var currentSpeed = 0.0
+  private var ownFlyParams = new Fly(FlyQuality.None)
   private var ownMaxFly = 0.0
   private var currentFly = 0.0
   private var flying = false
@@ -58,12 +61,14 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownMaxHealth = 0.0
   private var ownGoal : (VertexId,Entity)  = _
 
+  var meleeMode = 0
+  var rangedMode = 0
   // Used to make the agent move in the game
   //var steeringBehaviorModule = new SteeringBehavior()
 
   // no arguments constructor.
   def this() {
-    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0",""))
+    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0","0",""))
   }
 
   // Function that initialize class members
@@ -75,21 +80,24 @@ class Entity(args: Array[String]) extends Serializable {
     ownArmor = args(3).toDouble
     ownMeleeAttackDamage = args(4).toDouble
     ownMeleeAttackRange = args(5).toDouble
-    ownMeleeAttackPrecision = args(6).toDouble
+    ownMeleeAttackPrecision = makeArray(args(6))
+    ownNumberMelee = ownMeleeAttackPrecision.length
 
     ownRangedAttackDamage = args(7).toDouble
     ownRangedAttackRange = args(8).toDouble
-    ownRangedAttackPrecision = args(9).toDouble
+    ownRangedAttackPrecision = makeArray(args(9))
+    ownNumberRange = ownRangedAttackPrecision.length
 
     ownRegeneration = args(10).toDouble
     // Special case for position
     currentPosition = retrievePosition(args(11))
     ownMaxSpeed = args(12).toDouble
     currentSpeed = args(12).toDouble
-    ownMaxFly = args(13).toDouble
-    currentFly = args(13).toDouble
-    ownHeal = args(14).toDouble
-    ownHealRange = args(15).toDouble
+    ownFlyParams = new Fly(FlyQuality(args(13).toInt))
+    ownMaxFly = args(14).toDouble
+    currentFly = args(14).toDouble
+    ownHeal = args(15).toDouble
+    ownHealRange = args(16).toDouble
 
 
     //ownSpells = crawler.getSpellsByCreature(ownType)
@@ -110,10 +118,10 @@ class Entity(args: Array[String]) extends Serializable {
   def getArmor: Double = ownArmor
   def getMeleeAttackDamage: Double = ownMeleeAttackDamage
   def getMeleeAttackRange: Double = ownMeleeAttackRange
-  def getMeleeAttackPrecision: Double = ownMeleeAttackPrecision
+  def getMeleeAttackPrecision: Array[Double] = ownMeleeAttackPrecision
   def getRangedAttackDamage: Double = ownRangedAttackDamage
   def getRangedAttackRange: Double = ownRangedAttackRange
-  def getRangedAttackPrecision: Double = ownRangedAttackPrecision
+  def getRangedAttackPrecision: Array[Double] = ownRangedAttackPrecision
   def getRegeneration: Double = ownRegeneration
   def getSpells: ArrayBuffer[String] = ownSpells
   def getRelatedEntities: HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = ownRelatedEntities
@@ -134,7 +142,11 @@ class Entity(args: Array[String]) extends Serializable {
 
   def fixHealth(): Unit = if (currentHealth > ownMaxHealth) currentHealth = ownMaxHealth
 
-  def resetTurn(): Unit = turnDone = false
+  def resetTurn(): Unit = {
+    turnDone = false
+    meleeMode = 0
+    rangedMode = 0
+  }
 
   def resetSpeed(): Unit = {
     currentSpeed = ownMaxSpeed
@@ -318,14 +330,14 @@ class Entity(args: Array[String]) extends Serializable {
         ownGoal = (closestEnemy._1, closestEnemy._2._1)
         result = (false, (closestEnemy._1,closestEnemy._2._1))
       }
-      if (myVertexId == 15L) println(myVertexId + " TARGET : " + ownGoal._1 + " ("+ownGoal._2.getHealth+")")
+      println(myVertexId + " TARGET : " + ownGoal._1 + " ("+ownGoal._2.getHealth+")")
 
       result
     }
   }
 
 
-  def computeDamages(baseDamage: Double, precision: Double): Float = {
+  def computeDamages(baseDamage: Double, precision: Array[Double], index: Int): Float = {
 
     val d20Dice = GameUtils.rollDice(20)
     var damages = 0.0
@@ -342,7 +354,7 @@ class Entity(args: Array[String]) extends Serializable {
 
       case value =>
         //println(" Let's test.. ")
-        if (value +  precision > ownGoal._2.getArmor) {
+        if (value +  precision(index) > ownGoal._2.getArmor) {
           //println(" HIT ! ")
           val d1 = GameUtils.rollDice(6)
           val d2 = GameUtils.rollDice(6)
@@ -360,9 +372,14 @@ class Entity(args: Array[String]) extends Serializable {
   def moveToGoal(): Unit = {
 
     val targetPos = ownGoal._2.currentPosition
-
-    val distance = targetPos.distance(currentPosition)
-    val d = if (currentSpeed > distance) (currentSpeed-distance).toFloat else currentSpeed.toFloat
+    var d = 0F
+    if (flying) {
+      val distance = Math.sqrt(Math.pow(currentPosition.x - targetPos.x, 2) + Math.pow(currentPosition.y - targetPos.y, 2))
+      d = if (currentFly > distance) (currentFly - distance).toFloat else currentFly.toFloat
+    } else {
+      val distance = if(targetPos.z > 0) Math.sqrt(Math.pow(currentPosition.x - targetPos.x, 2) + Math.pow(currentPosition.y - targetPos.y, 2)) else targetPos.distance(currentPosition)
+      d = if (currentSpeed > distance) (currentSpeed - distance).toFloat else currentSpeed.toFloat
+    }
 
     val deltaX = targetPos.x - currentPosition.x
     val deltaY = targetPos.y - currentPosition.y
@@ -370,7 +387,7 @@ class Entity(args: Array[String]) extends Serializable {
     var newDeltaX = deltaX
     var newDeltaY = deltaY
 
-    if (deltaX == 0 && deltaY != 0){
+    if (deltaX == 0 && deltaY != 0) {
       newDeltaY = if (deltaY < 0) -d else d
 
     } else if (deltaY == 0 && deltaY != 0) {
@@ -384,19 +401,23 @@ class Entity(args: Array[String]) extends Serializable {
      * => newDeltaX = d / sqrt(a²+1)
      */
 
-      // Compute new coordonates
+      // Compute new coordinates
       val a = deltaY / deltaX
       newDeltaX = (d / Math.sqrt(a * a + 1)).toFloat
       newDeltaY = newDeltaX * a
 
       if (deltaX > 0) newDeltaX = Math.abs(newDeltaX) else newDeltaX = -Math.abs(newDeltaX)
-      if (deltaY > 0) newDeltaY = Math.abs(newDeltaY)  else newDeltaY = -Math.abs(newDeltaY)
+      if (deltaY > 0) newDeltaY = Math.abs(newDeltaY) else newDeltaY = -Math.abs(newDeltaY)
     }
 
     // Update entity
     currentPosition.x += newDeltaX
     currentPosition.y += newDeltaY
-    currentSpeed -= d
+    if (flying) {
+      currentFly -= d
+    } else {
+      currentSpeed -= d
+    }
   }
 
   /**
@@ -418,16 +439,33 @@ class Entity(args: Array[String]) extends Serializable {
     var distance = distanceInit
     updateRelatedEntities()
 
+
+    // If the entity is Good+ at flying, we should fly for better speed and avoid melee attacks
+    if ((ownFlyParams.maneuverability == FlyQuality.Good || ownFlyParams.maneuverability == FlyQuality.Perfect) && currentPosition.z != 10){
+      if (ownFlyParams.maneuverability == FlyQuality.Good ){
+        currentFly -= 20
+      } else {
+        currentFly -= 10
+      }
+      flying = true
+      currentPosition.z = 10
+    }
+
+
+
+
     if (!turnDone) {
       // Search a goal
       var potentialAllyInRange = false
       var result: (Boolean,(VertexId,Entity)) = (false, (1L,this))
 
       if (hasHeal) {
-        result = searchGoal(myVertexId, ownHealRange + currentSpeed)
+        val range = if (flying) Math.sqrt(Math.pow(ownHealRange + currentFly,2)-Math.pow(currentPosition.z,2)) else ownHealRange + currentSpeed
+        result = searchGoal(myVertexId, range)
         potentialAllyInRange = true
       } else {
-        result = searchGoal(myVertexId, ownRangedAttackRange + currentSpeed)
+        val range = if (flying) Math.sqrt(Math.pow(ownRangedAttackRange + currentFly,2)-Math.pow(currentPosition.z,2)) else ownRangedAttackRange + currentSpeed
+        result = searchGoal(myVertexId, range)
       }
 
       if (result._1) {
@@ -457,19 +495,19 @@ class Entity(args: Array[String]) extends Serializable {
                   if (distance <= ownRangedAttackRange) {
                     // No need to move for a ranged attack but can we melee with a move?
                     if (distance <= ownMeleeAttackRange) {
-                      action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                      action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision, meleeMode))
                     } else if (distance <= ownMeleeAttackRange + currentSpeed) {
                       moveToGoal()
                       distance = currentPosition.distance(ownGoal._2.currentPosition)
-                      action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                      action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision, meleeMode))
                     }
                     // Can't melee, so ranged attack
-                    action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
+                    action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision, rangedMode))
                   } else {
                     // Move and attack
                     moveToGoal()
                     distance = currentPosition.distance(ownGoal._2.currentPosition)
-                    action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
+                    action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision, rangedMode))
                   }
                   turnDone = true
                 }
@@ -479,19 +517,19 @@ class Entity(args: Array[String]) extends Serializable {
               if (distance <= ownRangedAttackRange) {
                 // No need to move for a ranged attack but can we melee with a move?
                 if (distance <= ownMeleeAttackRange) {
-                  action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                  action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision, meleeMode))
                 } else if (distance <= ownMeleeAttackRange + currentSpeed) {
                   moveToGoal()
                   distance = currentPosition.distance(ownGoal._2.currentPosition)
-                  action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision))
+                  action = (ownGoal._1, -computeDamages(ownMeleeAttackDamage, ownMeleeAttackPrecision, meleeMode))
                 }
                 // Can't melee, so ranged attack
-                action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
+                action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision, rangedMode))
               } else {
                 // Move and attack
                 moveToGoal()
                 distance = currentPosition.distance(ownGoal._2.currentPosition)
-                action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision))
+                action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision, rangedMode))
               }
               turnDone = true
             }
@@ -526,6 +564,15 @@ class Entity(args: Array[String]) extends Serializable {
       position = new Vector3f(x, y, z)
     }
     position
+  }
+
+  def makeArray(str: String): Array[Double] = {
+    val arrayString : Array[String] = str.replace("(", "").replace(")","").split("/")
+    var arrayDouble : Array[Double] = new Array[Double](arrayString.length)
+    for (i <- arrayString.indices){
+      arrayDouble(i) = arrayString(i).toDouble
+    }
+    arrayDouble
   }
 
 }
