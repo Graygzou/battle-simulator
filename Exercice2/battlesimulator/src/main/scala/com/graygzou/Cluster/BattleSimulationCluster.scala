@@ -197,8 +197,6 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     while (teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax) {
       println("Turn n°" + currentTurn)
 
-      //GameUtils.printGraph(currentGraph)
-
       var updatedEntities: VertexRDD[Entity] = playOneTurn(currentGraph)
 
       // Join the updated values to the graph
@@ -206,7 +204,11 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
       // Filter all the dead entities from the graph
       currentGraph = currentGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
-      currentGraph.vertices.collect.foreach(println(_))
+      if(debug) {
+        currentGraph.vertices.collect.foreach(println(_))
+      }
+
+      // Wait one second
       Thread.sleep(1000)
 
       // the team size based on the graph
@@ -228,53 +230,6 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
 
     currentTurn
-
-    // Gameloop
-    // While their is still a link between Team1 and Team2
-    // {
-      // For each nodes of the graph, in parallel
-      // {
-        // The current node check if an ennemy is in range
-        // {
-          // if so => Attack him
-          // if random + attack > armor
-          // {
-            // Send message to hurt him
-          // }
-        // }
-        // else
-        // {
-          // if not => Move in the direction of the closest ennemy
-        // }
-      // }
-    // }
-
-
-    // }
-
-    /*
-
-    // Attach the users attributes
-    val graph = followerGraph.outerJoinVertices(users) {
-      case (uid, deg, Some(attrList)) => attrList
-      // Some users may not have attributes so we set them as empty
-      case (uid, deg, None) => Array.empty[String]
-    }
-
-    // Restrict the graph to users with usernames and names
-    val subgraph = graph.subgraph(vpred = (vid, attr) => attr.size == 2)
-
-    // Compute the PageRank
-    val pagerankGraph = subgraph.pageRank(0.001)
-
-    // Get the attributes of the top pagerank users
-    val userInfoWithPageRank = subgraph.outerJoinVertices(pagerankGraph.vertices) {
-      case (uid, attrList, Some(pr)) => (pr, attrList.toList)
-      case (uid, attrList, None) => (0.0, attrList.toList)
-    }
-
-    println(userInfoWithPageRank.vertices.top(5)(Ordering.by(_._2._1)).mkString("\n"))
-    */
   }
 
 

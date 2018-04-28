@@ -122,6 +122,19 @@
           <version>3.0.0.20130526</version>
       </dependency>
 
+      <!-- NIFTY : User Interface -->
+      <dependency>
+          <groupId>com.github.nifty-gui</groupId>
+          <artifactId>nifty</artifactId>
+          <version>1.4.2</version>
+      </dependency>
+
+      <!-- https://mvnrepository.com/artifact/org.jmonkeyengine/jme3-niftygui -->
+      <dependency>
+          <groupId>org.jmonkeyengine</groupId>
+          <artifactId>jme3-niftygui</artifactId>
+          <version>3.2.1-stable</version>
+      </dependency>
   </dependencies>
 
 </project>

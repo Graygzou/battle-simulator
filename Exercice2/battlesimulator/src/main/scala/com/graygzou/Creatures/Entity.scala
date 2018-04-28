@@ -42,7 +42,6 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownRegeneration = 0.0
   var turnDone = false
 
-  // Set his team to a default value.
   private var ownTeam = Team(0)
   private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
   private var ownMaxSpeed = 0.0
@@ -113,9 +112,6 @@ class Entity(args: Array[String]) extends Serializable {
   // Call the "constructor" like.
   initClassFields()
 
-  // World coordinate
-  //var ownPosition = position;
-
   // Accessors
   def getTeam: Team.Value = ownTeam
   def getCurrentPosition: Vector3f = currentPosition
@@ -159,10 +155,10 @@ class Entity(args: Array[String]) extends Serializable {
     currentFly = ownMaxFly
   }
 
-  def updateRelatedEntities(): Unit ={
+  def updateRelatedEntities(): Unit = {
     var relatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
-    for (entity <- ownRelatedEntities){
-      if (entity._2._1.getHealth > 0){
+    for (entity <- ownRelatedEntities) {
+      if (entity._2._1.getHealth > 0) {
         relatedEntities += entity
       }
     }
@@ -443,12 +439,13 @@ class Entity(args: Array[String]) extends Serializable {
 
     var action = (-3L,0D)
     var distance = distanceInit
-    updateRelatedEntities()
 
+    // Called to filter dead entities.
+    updateRelatedEntities()
 
     // If the entity is Good+ at flying and has range attack, we should fly for better speed and avoid melee attacks + throwing axes
     if ((ownFlyParams.maneuverability == FlyQuality.Good || ownFlyParams.maneuverability == FlyQuality.Perfect) && ownRangedAttackRange > 15 && currentPosition.z != 15){
-      if (ownFlyParams.maneuverability == FlyQuality.Good ){
+      if (ownFlyParams.maneuverability == FlyQuality.Good ) {
         currentFly -= 30
       } else {
         currentFly -= 15
@@ -456,9 +453,6 @@ class Entity(args: Array[String]) extends Serializable {
       flying = true
       currentPosition.z = 15
     }
-
-
-
 
     if (!turnDone) {
       // Search a goal
@@ -560,14 +554,9 @@ class Entity(args: Array[String]) extends Serializable {
 
   def retrievePosition(str: String) : Vector3f = {
     var position = new Vector3f(0,0,0)
-    val coordinates : Array[String] = str.replace("(", "").replace(")","").split("/")
+    val coordinates : Array[Double] = makeArray(str)
     if(coordinates.length == 3) {
-      val x : Float = coordinates(0).toFloat
-      val y : Float = coordinates(1).toFloat
-      val z : Float = {
-        coordinates(2).toFloat
-      }
-      position = new Vector3f(x, y, z)
+      position = new Vector3f(coordinates(0).toFloat, coordinates(1).toFloat, coordinates(2).toFloat)
     }
     position
   }
