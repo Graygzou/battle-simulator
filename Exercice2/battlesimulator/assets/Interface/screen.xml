@@ -38,8 +38,8 @@
                 <!-- spacer -->
             </panel>
             <panel id="panel_right" width="20%" height="100%" childLayout="vertical" backgroundColor="#00f8">
-                <panel id="panel_top_right1" width="100%" height="15%" childLayout="center"
-                       backgroundColor="#00f8">
+                <panel id="panel_top_right1" width="100%" height="15%" childLayout="center" backgroundColor="#00f8">
+                    <text id="text1" style="nifty-label" height="100%" width="100%" text="Health" wrap="true" backgroundColor="#000f" textHAlign="left" textVAlign="center"/>
                 </panel>
                 <panel id="panel_top_right2" width="100%" height="15%" childLayout="center"
                        backgroundColor="#44f8">

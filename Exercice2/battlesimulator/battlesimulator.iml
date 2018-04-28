@@ -7,6 +7,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/scala" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/scala" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/assets" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/com" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/SimpleChaseCamera" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -42,7 +44,6 @@
     <orderEntry type="library" name="Maven: commons-beanutils:commons-beanutils:1.7.0" level="project" />
     <orderEntry type="library" name="Maven: commons-beanutils:commons-beanutils-core:1.8.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:2.5.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.2.4" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hadoop:hadoop-auth:2.6.5" level="project" />
     <orderEntry type="library" name="Maven: org.apache.directory.server:apacheds-kerberos-codec:2.0.0-M15" level="project" />
     <orderEntry type="library" name="Maven: org.apache.directory.server:apacheds-i18n:2.0.0-M15" level="project" />
@@ -188,5 +189,12 @@
     <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-niftygui:3.2.1-stable" level="project" />
     <orderEntry type="library" name="Maven: com.github.nifty-gui:nifty-default-controls:1.4.2" level="project" />
     <orderEntry type="library" name="Maven: com.github.nifty-gui:nifty-style-black:1.4.2" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-bullet-native:3.2.1-stable" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-bullet:3.2.1-stable" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-terrain:3.2.1-stable" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-jbullet:3.2.1-stable" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-plugins:3.2.1-stable" level="project" />
+    <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.1" level="project" />
+    <orderEntry type="library" name="Maven: org.jmonkeyengine:jme3-effects:3.2.1-stable" level="project" />
   </component>
 </module>
