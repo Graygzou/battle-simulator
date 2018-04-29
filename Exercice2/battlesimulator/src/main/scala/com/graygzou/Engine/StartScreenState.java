@@ -16,10 +16,22 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.control.BillboardControl;
 import com.jme3.scene.shape.Quad;
 import de.lessvoid.nifty.Nifty;
+import de.lessvoid.nifty.NiftyEventSubscriber;
+import de.lessvoid.nifty.controls.ListBox;
+import de.lessvoid.nifty.controls.ListBoxSelectionChangedEvent;
+import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
+import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
 
+import java.util.List;
+
 public class StartScreenState extends BaseAppState implements ScreenController {
+
+    // Parameters from the bind
+    private Nifty nifty;
+    private Screen screen;
+    // End
 
     private boolean gameFinished = false;
     private float gameFinishCountDown = 5f;
@@ -45,6 +57,26 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         game = new BattleSimulationCluster("Fight1", "local[1]");
     }
 
+
+    /**
+     * Fill the listbox with items. In this case with Strings.
+     */
+    public void fillMyListBoxTeams() {
+
+        // TEAM 1
+        ListBox<ChatEntryModelClass> listBox1 = (ListBox<ChatEntryModelClass>) this.screen.findNiftyControl("listBoxTeam1", ListBox.class);
+        NiftyImage newImage = nifty.getRenderEngine().createImage(this.screen, "/Interface/teapot.png",false);
+        // false means don't linear filter the image, true would apply linear filtering
+        listBox1.addItem(new ChatEntryModelClass("orc1", newImage));
+        listBox1.addItem(new ChatEntryModelClass("orc2", newImage));
+
+        // TEAM 2
+        ListBox<ChatEntryModelClass> listBox2 = (ListBox<ChatEntryModelClass>) screen.findNiftyControl("listBoxTeam2", ListBox.class);
+        // false means don't linear filter the image, true would apply linear filtering
+        listBox2.addItem(new ChatEntryModelClass("Angel Random", newImage));
+        listBox2.addItem(new ChatEntryModelClass("Angel Slayer d'orcs", newImage));
+    }
+
     @Override
     protected void initialize(Application app) {
         this.app = app;
@@ -58,6 +90,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         ((SimpleApplication) app).getGuiNode().attachChild(localGuiNode);
         ((SimpleApplication) app).getViewPort().setBackgroundColor(backgroundColor);
 
+
         /** init the screen */
 
         mat_default = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
@@ -67,12 +100,14 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         //game = new BattleSimulationCluster("Fight 1","local[*]");
         gameEntities = new Node[game.screenEntities().length];
 
+        int actualNbEntity = 0;
         // You initialize game objects:
         for(TeamEntities currentTeam : game.screenTeams()) {
             System.out.println(currentTeam.countAliveEntity());
-            for(int i = 0; i < currentTeam.countAliveEntity(); i++) {
+            int i = 0;
+            while(i < currentTeam.countAliveEntity()) {
                 // Create the node
-                gameEntities[i] = new Node(currentTeam.getEntities()[i].getType());
+                gameEntities[actualNbEntity] = new Node(currentTeam.getEntities()[i].getType());
                 Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
 
                 // Create the model of the entity
@@ -99,19 +134,24 @@ public class StartScreenState extends BaseAppState implements ScreenController {
                 Material mathb = mat_default.clone();
                 mathb.setColor("Color", ColorRGBA.Red);
                 healthbar.setMaterial(mathb);
-                gameEntities[i].attachChild(healthbar);
+                gameEntities[actualNbEntity].attachChild(healthbar);
                 healthbar.center();
                 healthbar.move(current_spatial.getLocalTranslation().add(new Vector3f(0, 0, 0)));
                 healthbar.addControl(billboard);
 
 
                 // Add the entity representation
-                gameEntities[i].attachChild(current_spatial);
+                gameEntities[actualNbEntity].attachChild(current_spatial);
 
                 // Attach the current entity to the rootNode
-                ((SimpleApplication) app).getRootNode().attachChild(gameEntities[i]);
+                ((SimpleApplication) app).getRootNode().attachChild(gameEntities[actualNbEntity]);
+
+                i++;
+                actualNbEntity++;
             }
         }
+
+        fillMyListBoxTeams();
 
         // initialize camera and variables
         ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
@@ -199,7 +239,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     @Override
     public void bind(Nifty nifty, Screen screen) {
-        System.out.println("bind( " + screen.getScreenId() + ")");
+        System.out.println("bind(" + screen.getScreenId() + ")");
+        this.nifty = nifty;
+        this.screen = screen;
     }
 
     @Override

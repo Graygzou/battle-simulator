@@ -4,7 +4,28 @@
     <useStyles filename="nifty-default-styles.xml"/>
     <useControls filename="nifty-default-controls.xml"/>
 
-    <screen id="start" controller="de.lessvoid.nifty.screen.DefaultScreenController">
+    <!-- this defines the control for a single line of text in the chat and player window -->
+    <controlDefinition name="customListBox-line" >
+        <panel childLayout="vertical" width="100%" align="center">
+            <interact onClick="listBoxItemClicked()" />
+            <effect>
+                <onCustom customKey="focus" name="colorBar" post="false" color="#444f" neverStopRendering="true" timeType="infinite" />
+                <onCustom customKey="select" name="colorBar" post="false" color="#444f" neverStopRendering="true" timeType="infinite" />
+                <onCustom customKey="select" name="textColor" post="false" color="#fc0f" neverStopRendering="true" timeType="infinite" />
+                <onHover name="colorBar" color="#444f" post="false" neverStopRendering="true" timeType="infinite" inset="1px"/>
+                <onClick name="focus" targetElement="#parent#parent"/>
+            </effect>
+            <panel childLayout="horizontal" width="100%" height="23px" align="center">
+                <image id="#icon" width="23px" height="23px" />
+                <control id="#entity-name" name="label" visibleToMouse="true" align="left" textHAlign="left" height="23px" width="*" wrap="true" />
+            </panel>
+            <panel childLayout="horizontal" width="100%" height="10px" align="center" backgroundColor="#f00f">
+            </panel>
+        </panel>
+    </controlDefinition>
+
+    <!-- START SCREEN NOT YET IMPLEMENTED
+    <screen id="start" controller="com.graygzou.Engine.StartScreenState">
         <layer id="background" childLayout="center" backgroundColor="#000f">
             <image filename="Interface/teapot.png"></image>
         </layer>
@@ -25,26 +46,55 @@
                 </panel>
             </panel>
         </layer>
-    </screen>
-    <screen id="hud" controller="de.lessvoid.nifty.screen.DefaultScreenController">
-        <layer id="background" childLayout="center">
-            <panel id="panel_left" width="100%" height="100%" valign="bottom" childLayout="vertical">
-                <image filename="Interface/teapot.png" width="50px" height="50px"></image>
-            </panel>
+    </screen> -->
 
+    <!--             -->
+    <!-- In game HUD -->
+    <!--              -->
+    <screen id="hud" controller="com.graygzou.Engine.StartScreenState">
+        <layer id="background" childLayout="center">
+            <!--<panel id="panel_left" width="100%" height="100%" valign="bottom" childLayout="vertical">
+
+                <image filename="Interface/teapot.png" width="50px" height="50px"></image>
+            </panel>-->
         </layer>
+
         <layer id="foreground" childLayout="horizontal">
-            <panel id="panel_left" width="80%" height="100%" childLayout="vertical">
-                <!-- spacer -->
-            </panel>
-            <panel id="panel_right" width="20%" height="100%" childLayout="vertical" backgroundColor="#00f8">
-                <panel id="panel_top_right1" width="100%" height="15%" childLayout="center" backgroundColor="#00f8">
-                    <text id="text1" style="nifty-label" height="100%" width="100%" text="Health" wrap="true" backgroundColor="#000f" textHAlign="left" textVAlign="center"/>
+            <!-- Panel Team 1 -->
+            <panel id="panel_left" width="20%" height="100%" childLayout="vertical">
+                <panel id="team1_panel" width="100%" height="15%" childLayout="vertical">
+                    <text id="textTeam1" style="nifty-label" height="100%" width="100%" text="Team1" wrap="true" textHAlign="left" textVAlign="center"/>
+                    <control id="listBoxTeam1" name="listBox" width="100%" height="*" vertical="optional" horizontal="off" selection="single" displayItems="15"
+                             viewConverterClass="com.graygzou.Engine.ChatBoxViewConverter">
+                        <control name="customListBox-line" controller="de.lessvoid.nifty.controls.listbox.ListBoxItemController" />
+                        <!-- here we tell Nifty what element to display in each line and the controller is necessary if you want to support selections -->
+                    </control>
                 </panel>
-                <panel id="panel_top_right2" width="100%" height="15%" childLayout="center"
-                       backgroundColor="#44f8">
+
+                <!-- simple default dropdown. please note: event notification requires an id -->
+                <!--
+                <control id="dropDown2" name="dropDown" />
+
+                <panel id="panel_top_right2" width="100%" height="15%" childLayout="center" backgroundColor="#44f8">
                 </panel>
                 <panel id="panel_bot_right" width="100%" height="70%" valign="center" backgroundColor="#88f8">
+                </panel>-->
+            </panel>
+
+            <!-- spacer -->
+            <panel id="panel_middle" width="60%" height="100%" childLayout="vertical">
+                <!-- spacer -->
+            </panel>
+
+            <!-- Panel Team 2 -->
+            <panel id="panel_right" width="20%" height="100%" childLayout="vertical" >
+                <panel id="team2_panel" width="100%" height="15%" childLayout="vertical">
+                    <text id="textTeam2" style="nifty-label" height="100%" width="100%" text="Team2" wrap="true" textHAlign="left" textVAlign="center"/>
+                    <control id="listBoxTeam2" name="listBox" width="100%" height="*" vertical="optional" horizontal="off" selection="single" displayItems="15"
+                             viewConverterClass="com.graygzou.Engine.ChatBoxViewConverter">
+                        <control name="customListBox-line" controller="de.lessvoid.nifty.controls.listbox.ListBoxItemController" />
+                        <!-- here we tell Nifty what element to display in each line and the controller is necessary if you want to support selections -->
+                    </control>
                 </panel>
             </panel>
         </layer>

@@ -28,12 +28,20 @@ import com.jme3.texture.Image;
 import com.jme3.texture.Texture;
 import com.jme3.texture.Texture2D;
 import de.lessvoid.nifty.Nifty;
+import de.lessvoid.nifty.NiftyEventSubscriber;
 import de.lessvoid.nifty.builder.*;
+import de.lessvoid.nifty.controls.ListBox;
+import de.lessvoid.nifty.controls.ListBoxSelectionChangedEvent;
 import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
+import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
 import de.lessvoid.nifty.controls.label.builder.LabelBuilder;
+import de.lessvoid.nifty.controls.listbox.ListBoxItemController;
+import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.DefaultScreenController;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
+
+import java.util.List;
 
 // Custom graphe imports
 
@@ -96,97 +104,33 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
         startScreenState = new StartScreenState(this);
         stateManager.attach(startScreenState);
         // [...] boilerplate init nifty omitted
-        nifty.fromXml("Interface/screen.xml", "hud", startScreenState); //one of the XML screen elements needs to reference StartScreenState controller class
-
-
-        guiViewPort.addProcessor(niftyDisplay);
-         /*
-        ViewPort niftyView = renderManager.createPreView("NiftyView", cam);
-        niftyView.setClearFlags(true, true, true);
-        NiftyJmeDisplay niftyDisplay = new NiftyJmeDisplay(assetManager,
-                inputManager,
-                audioRenderer,
-                niftyView);
-        nifty = niftyDisplay.getNifty();
-        //nifty.fromXml("all/intro.xml", "start");
         try {
             nifty.validateXml("Interface/screen.xml");
         } catch (Exception e) {
             e.printStackTrace();
         }
+        nifty.fromXml("Interface/screen.xml", "hud", startScreenState); //one of the XML screen elements needs to reference StartScreenState controller class
 
-        nifty.fromXml("Interface/screen.xml", "hud", this);
-        //niftyView.addProcessor(niftyDisplay);
+        guiViewPort.addProcessor(niftyDisplay);
 
-        //nifty.addXml("Interface/Screens/OptionsScreen.xml");
-        //nifty.addXml("Interface/Screens/StartScreen.xml");
-        nifty.gotoScreen("start");
-
-        //StartScreenState screenControl = (StartScreenState) nifty.getScreen("start").getScreenController();
-        //stateManager.attach(screenControl);
-        //guiViewPort.addProcessor(niftyDisplay);*/
-
-
-        /*
-        Texture2D depthTex = new Texture2D(1024, 768, Image.Format.Depth);
-        FrameBuffer fb = new FrameBuffer(1024, 768, 1);
-        fb.setDepthTexture(depthTex);
-
-        Texture2D tex = new Texture2D(1024, 768, Image.Format.RGBA8);
-        tex.setMinFilter(Texture.MinFilter.Trilinear);
-        tex.setMagFilter(Texture.MagFilter.Bilinear);
-
-        fb.setColorTexture(tex);
-        niftyView.setClearFlags(true, true, true);
-        niftyView.setOutputFrameBuffer(fb);
-
-        Box b = new Box(1, 1, 1);
-        Geometry geom = new Geometry("Box", b);
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setTexture("ColorMap", tex);
-        geom.setMaterial(mat);
-        rootNode.attachChild(geom);*/
-
-
-        //You initialize keys and mouse actions:
-
-
-
-
-        /** this blue box is our player character */
-        /*
-        Box b = new Box(1, 1, 1);
-        player = new Geometry("blue cube", b);
-        Material mat = new Material(assetManager,
-                "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setColor("Color", ColorRGBA.Blue);
-        player.setMaterial(mat);
-        rootNode.attachChild(player);*/
+        //startScreenState.bind(nifty, nifty.getScreen("hud"));
 
     }
 
-    //onEnable()/onDisable() can be used for managing things that should
-    //only exist while the state is enabled. Prime examples would be scene
-    //graph attachment or input listener attachment.
-    protected void createUI() {
+    /**
+     * When the selection of the ListBox changes this method is called.
+     */
+    /*
+    @NiftyEventSubscriber(id="myCustomListBox")
+    public void onMyListBoxSelectionChanged(final String id, final ListBoxSelectionChangedEvent<JustAnExampleModelClass> event) {
 
-        // Setup your Nifty display
-        NiftyJmeDisplay niftyDisplay = NiftyJmeDisplay.newNiftyJmeDisplay(
-                getAssetManager(),
-                getInputManager(),
-                getAudioRenderer(),
-                getGuiViewPort());
+        List<String> selection = event.getSelection();
+        for (String selectedItem : selection) {
+            System.out.println("listbox selection [" + selectedItem + "]");
+        }
 
-        Nifty nifty = niftyDisplay.getNifty();
-        getGuiViewPort().addProcessor(niftyDisplay);
-        getFlyByCamera().setDragToRotate(true);
-
-        nifty.loadStyleFile("nifty-default-styles.xml");
-        nifty.loadControlFile("nifty-default-controls.xml");
-
-        // start the screen
-        nifty.gotoScreen("hud");
-}
+        List<JustAnExampleModelClass> selection = event.getSelection();
+    }*/
 
     protected void onDisable() {
         //Called when the state was previously enabled but is now disabled
@@ -222,9 +166,7 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
         }
         if (name.equals("moveLeft")) {
             //teaGeom.move(-5 * tpf, 0, 0);
-
         }
-
     }
 
     @Override
