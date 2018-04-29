@@ -29,35 +29,35 @@ class Entity(args: Array[String]) extends Serializable {
 
   // Basic members fields.
   private var ownType = ""
-  private var currentHealth = 0.0
-  private var ownArmor = 0.0 // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
-  private var ownMeleeAttackDamage = 0.0
-  private var ownMeleeAttackRange = 0.0
-  private var ownMeleeAttackPrecision: Array[Double] = _
-  private var ownNumberMelee = 0
-  private var ownRangedAttackDamage = 0.0
-  private var ownRangedAttackRange = 0.0
-  private var ownRangedAttackPrecision: Array[Double] = _
-  private var ownNumberRange = 0
-  private var ownRegeneration = 0.0
+  private var currentHealth = 0.0f
+  private var ownArmor = 0.0f // Should be 10 + armor bonus + shield bonus + Dexterity modifier + other modifiers
+  private var ownMeleeAttackDamage = 0.0f
+  private var ownMeleeAttackRange = 0.0f
+  private var ownMeleeAttackPrecision: Array[Float] = _
+  private var ownNumberMelee = 0.0f
+  private var ownRangedAttackDamage = 0.0f
+  private var ownRangedAttackRange = 0.0f
+  private var ownRangedAttackPrecision: Array[Float] = _
+  private var ownNumberRange = 0.0f
+  private var ownRegeneration = 0.0f
   var turnDone = false
 
   private var ownTeam = Team(0)
   private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
-  private var ownMaxSpeed = 0.0
-  private var currentSpeed = 0.0
+  private var ownMaxSpeed = 0.0f
+  private var currentSpeed = 0.0f
   private var ownFlyParams = new Fly(FlyQuality.None)
-  private var ownMaxFly = 0.0
-  private var currentFly = 0.0
+  private var ownMaxFly = 0.0f
+  private var currentFly = 0.0f
   private var flying = false
 
-  private var ownHeal = 0.0
-  private var ownHealRange = 0.0
+  private var ownHeal = 0.0f
+  private var ownHealRange = 0.0f
 
   private var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
 
   private var ownRelatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
-  private var ownMaxHealth = 0.0
+  private var ownMaxHealth = 0.0f
   private var ownGoal : (VertexId,Entity)  = _
 
   var meleeMode = 0
@@ -74,29 +74,29 @@ class Entity(args: Array[String]) extends Serializable {
   def initClassFields(): Unit = {
     ownTeam = Team(args(0).toInt - 1) // In the .txt file, we start counting team at '1' and not '0'
     ownType = args(1)
-    ownMaxHealth = args(2).toDouble
-    currentHealth = args(2).toDouble
-    ownArmor = args(3).toDouble
-    ownMeleeAttackDamage = args(4).toDouble
-    ownMeleeAttackRange = args(5).toDouble
+    ownMaxHealth = args(2).toFloat
+    currentHealth = args(2).toFloat
+    ownArmor = args(3).toFloat
+    ownMeleeAttackDamage = args(4).toFloat
+    ownMeleeAttackRange = args(5).toFloat
     ownMeleeAttackPrecision = makeArray(args(6))
     ownNumberMelee = ownMeleeAttackPrecision.length
 
-    ownRangedAttackDamage = args(7).toDouble
-    ownRangedAttackRange = args(8).toDouble
+    ownRangedAttackDamage = args(7).toFloat
+    ownRangedAttackRange = args(8).toFloat
     ownRangedAttackPrecision = makeArray(args(9))
     ownNumberRange = ownRangedAttackPrecision.length
 
-    ownRegeneration = args(10).toDouble
+    ownRegeneration = args(10).toFloat
     // Special case for position
     currentPosition = retrievePosition(args(11))
-    ownMaxSpeed = args(12).toDouble
-    currentSpeed = args(12).toDouble
+    ownMaxSpeed = args(12).toFloat
+    currentSpeed = args(12).toFloat
     ownFlyParams = new Fly(FlyQuality(args(13).toInt))
-    ownMaxFly = args(14).toDouble
-    currentFly = args(14).toDouble
-    ownHeal = args(15).toDouble
-    ownHealRange = args(16).toDouble
+    ownMaxFly = args(14).toFloat
+    currentFly = args(14).toFloat
+    ownHeal = args(15).toFloat
+    ownHealRange = args(16).toFloat
 
     // if no range attack, replace stats with melee (or we should rewrite AI)
     if (ownRangedAttackRange == 0){
@@ -116,26 +116,26 @@ class Entity(args: Array[String]) extends Serializable {
   def getTeam: Team.Value = ownTeam
   def getCurrentPosition: Vector3f = currentPosition
   def getType: String = ownType
-  def getHealth: Double = currentHealth
-  def getArmor: Double = ownArmor
-  def getMeleeAttackDamage: Double = ownMeleeAttackDamage
-  def getMeleeAttackRange: Double = ownMeleeAttackRange
-  def getMeleeAttackPrecision: Array[Double] = ownMeleeAttackPrecision
+  def getHealth: Float = currentHealth
+  def getArmor: Float = ownArmor
+  def getMeleeAttackDamage: Float = ownMeleeAttackDamage
+  def getMeleeAttackRange: Float = ownMeleeAttackRange
+  def getMeleeAttackPrecision: Array[Float] = ownMeleeAttackPrecision
   def getRangedAttackDamage: Double = ownRangedAttackDamage
   def getRangedAttackRange: Double = ownRangedAttackRange
-  def getRangedAttackPrecision: Array[Double] = ownRangedAttackPrecision
-  def getRegeneration: Double = ownRegeneration
+  def getRangedAttackPrecision: Array[Float] = ownRangedAttackPrecision
+  def getRegeneration: Float = ownRegeneration
   def getSpells: ArrayBuffer[String] = ownSpells
   def getRelatedEntities: HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = ownRelatedEntities
-  def getMaxHealth: Double = ownMaxHealth
+  def getMaxHealth: Float = ownMaxHealth
   def getGoal: (VertexId,Entity) = ownGoal
-  def getMaxSpeed: Double = ownMaxSpeed
-  def getCurrentSpeed: Double = currentSpeed
-  def getMaxFly: Double = ownMaxFly
-  def getCurrentFly: Double = currentFly
+  def getMaxSpeed: Float = ownMaxSpeed
+  def getCurrentSpeed: Float = currentSpeed
+  def getMaxFly: Float = ownMaxFly
+  def getCurrentFly: Float = currentFly
   def isFlying: Boolean = flying
-  def getHeal: Double = ownHeal
-  def getHealRange: Double = ownHealRange
+  def getHeal: Float = ownHeal
+  def getHealRange: Float = ownHealRange
 
 
   def hasHeal: Boolean = ownHeal > 0
@@ -339,7 +339,7 @@ class Entity(args: Array[String]) extends Serializable {
   }
 
 
-  def computeDamages(baseDamage: Double, precision: Array[Double], index: Int): Float = {
+  def computeDamages(baseDamage: Float, precision: Array[Float], index: Int): Float = {
 
     val d20Dice = GameUtils.rollDice(20)
     var damages = 0.0
@@ -554,18 +554,18 @@ class Entity(args: Array[String]) extends Serializable {
 
   def retrievePosition(str: String) : Vector3f = {
     var position = new Vector3f(0,0,0)
-    val coordinates : Array[Double] = makeArray(str)
+    val coordinates : Array[Float] = makeArray(str)
     if(coordinates.length == 3) {
       position = new Vector3f(coordinates(0).toFloat, coordinates(1).toFloat, coordinates(2).toFloat)
     }
     position
   }
 
-  def makeArray(str: String): Array[Double] = {
+  def makeArray(str: String): Array[Float] = {
     val arrayString : Array[String] = str.replace("(", "").replace(")","").split("/")
-    var arrayDouble : Array[Double] = new Array[Double](arrayString.length)
+    var arrayDouble : Array[Float] = new Array[Float](arrayString.length)
     for (i <- arrayString.indices){
-      arrayDouble(i) = arrayString(i).toDouble
+      arrayDouble(i) = arrayString(i).toFloat
     }
     arrayDouble
   }

@@ -1,5 +1,3 @@
-package SimpleChaseCamera;
-
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.input.ChaseCamera;

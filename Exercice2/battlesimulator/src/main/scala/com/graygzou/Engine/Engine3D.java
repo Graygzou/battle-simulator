@@ -22,6 +22,7 @@ import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Quad;
 import com.jme3.texture.FrameBuffer;
 import com.jme3.texture.Image;
 import com.jme3.texture.Texture;
@@ -69,10 +70,6 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
     public void simpleInitApp() {
 
         // Init the UI
-        //createUI();
-
-
-
         registerInput();
 
 
@@ -215,13 +212,6 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
     @Override
     public void simpleUpdate(float tpf) {
         super.simpleUpdate(tpf);
-        // tpf : time par frame
-
-        /*
-        for(Entity currentEntity : game.screenEntities()) {
-            //currentEntity.
-        }*/
-        //player.rotate(0, 2*tpf, 0);
 
     }
 

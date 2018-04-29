@@ -6,7 +6,7 @@
 
     <screen id="start" controller="de.lessvoid.nifty.screen.DefaultScreenController">
         <layer id="background" childLayout="center" backgroundColor="#000f">
-            <image filename="Interface/ateam.jpg"></image>
+            <image filename="Interface/teapot.png"></image>
         </layer>
         <layer id="foreground" backgroundColor="#0000" childLayout="vertical">
             <panel id="panel_top" height="25%" width="75%" align="center" childLayout="center"
@@ -29,7 +29,7 @@
     <screen id="hud" controller="de.lessvoid.nifty.screen.DefaultScreenController">
         <layer id="background" childLayout="center">
             <panel id="panel_left" width="100%" height="100%" valign="bottom" childLayout="vertical">
-                <image filename="Interface/ateam.jpg"></image>
+                <image filename="Interface/teapot.png" width="50px" height="50px"></image>
             </panel>
 
         </layer>
