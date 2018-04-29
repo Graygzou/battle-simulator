@@ -16,16 +16,16 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.control.BillboardControl;
 import com.jme3.scene.shape.Quad;
 import de.lessvoid.nifty.Nifty;
-import de.lessvoid.nifty.NiftyEventSubscriber;
 import de.lessvoid.nifty.controls.ListBox;
-import de.lessvoid.nifty.controls.ListBoxSelectionChangedEvent;
 import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
 import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
 
-import java.util.List;
-
+/**
+ * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
+ * @version: 0.0.1
+ */
 public class StartScreenState extends BaseAppState implements ScreenController {
 
     // Parameters from the bind
@@ -97,15 +97,15 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
         // Create the regular graph
         game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", true);
-        //game = new BattleSimulationCluster("Fight 1","local[*]");
         gameEntities = new Node[game.screenEntities().length];
 
         int actualNbEntity = 0;
         // You initialize game objects:
         for(TeamEntities currentTeam : game.screenTeams()) {
-            System.out.println(currentTeam.countAliveEntity());
+
             int i = 0;
             while(i < currentTeam.countAliveEntity()) {
+                System.out.println(currentTeam.getEntities()[i]);
                 // Create the node
                 gameEntities[actualNbEntity] = new Node(currentTeam.getEntities()[i].getType());
                 Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
@@ -136,7 +136,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
                 healthbar.setMaterial(mathb);
                 gameEntities[actualNbEntity].attachChild(healthbar);
                 healthbar.center();
-                healthbar.move(current_spatial.getLocalTranslation().add(new Vector3f(0, 0, 0)));
+                healthbar.move(current_spatial.getLocalTranslation().add(Vector3f.ZERO));
                 healthbar.addControl(billboard);
 
 

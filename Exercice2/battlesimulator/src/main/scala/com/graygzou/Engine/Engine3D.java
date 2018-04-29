@@ -47,7 +47,10 @@ import java.util.List;
 
 /** This class call the JME3 engine to render the fight in 3D
  * It has to be in Java since the engine need specific method
- * */
+ *
+ * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
+ * @version: 0.0.1
+ */
 public class Engine3D extends SimpleApplication implements AnalogListener, ActionListener {
 
     private Nifty nifty;

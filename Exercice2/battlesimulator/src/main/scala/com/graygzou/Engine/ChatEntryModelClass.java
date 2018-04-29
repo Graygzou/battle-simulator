@@ -6,8 +6,8 @@ import de.lessvoid.nifty.render.NiftyImage;
  * Handles a line in the chat controller. This can be either a chat line or an
  * entry in the list of players.
  *
- * @author Mark
- * @version 0.1
+ * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
+ * @version: 0.0.1
  */
 public final class ChatEntryModelClass {
     private String label;

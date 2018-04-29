@@ -8,8 +8,8 @@ import de.lessvoid.nifty.elements.render.TextRenderer;
 
 /**
  * Handles the displaying of the items in the ChatBox.
- * @author Mark
- * @version 0.1
+ * @author Grégoire Boiron
+ * @version 0.0.1
  */
 public class ChatBoxViewConverter implements ListBox.ListBoxViewConverter<ChatEntryModelClass> {
     private static final String CHAT_LINE_ICON = "#icon";

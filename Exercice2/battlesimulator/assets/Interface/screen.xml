@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+@author: Grégoire Boiron <gregoire.boiron@gmail.com>
+@version: 0.0.1
+-->
+
 <nifty xmlns="http://nifty-gui.lessvoid.com/nifty-gui" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <!-- Your IDE now tells you that one <screen></screen> element is expected here, etc. -->
     <useStyles filename="nifty-default-styles.xml"/>
@@ -24,7 +30,10 @@
         </panel>
     </controlDefinition>
 
-    <!-- START SCREEN NOT YET IMPLEMENTED
+    <!--              -->
+    <!-- Start Screen -->
+    <!--              -->
+    <!-- NOT YET IMPLEMENTED
     <screen id="start" controller="com.graygzou.Engine.StartScreenState">
         <layer id="background" childLayout="center" backgroundColor="#000f">
             <image filename="Interface/teapot.png"></image>
@@ -50,13 +59,10 @@
 
     <!--             -->
     <!-- In game HUD -->
-    <!--              -->
+    <!--             -->
     <screen id="hud" controller="com.graygzou.Engine.StartScreenState">
         <layer id="background" childLayout="center">
-            <!--<panel id="panel_left" width="100%" height="100%" valign="bottom" childLayout="vertical">
 
-                <image filename="Interface/teapot.png" width="50px" height="50px"></image>
-            </panel>-->
         </layer>
 
         <layer id="foreground" childLayout="horizontal">
@@ -70,20 +76,21 @@
                         <!-- here we tell Nifty what element to display in each line and the controller is necessary if you want to support selections -->
                     </control>
                 </panel>
-
-                <!-- simple default dropdown. please note: event notification requires an id -->
-                <!--
-                <control id="dropDown2" name="dropDown" />
-
-                <panel id="panel_top_right2" width="100%" height="15%" childLayout="center" backgroundColor="#44f8">
-                </panel>
-                <panel id="panel_bot_right" width="100%" height="70%" valign="center" backgroundColor="#88f8">
-                </panel>-->
             </panel>
 
             <!-- spacer -->
-            <panel id="panel_middle" width="60%" height="100%" childLayout="vertical">
-                <!-- spacer -->
+            <panel id="panel_middle" width="60%" height="100%" childLayout="center">
+                <panel id="panel_score" childLayout="horizontal" width="50%" align="center" valign="top" >
+                    <control name="label" text="0" width="20px" backgroundColor="#f00f" /> <!-- Should be set with the team color -->
+                    <text id="text-score" style="nifty-label" height="100%" width="100%" text="Score" wrap="true" textHAlign="center" textVAlign="center"/>
+                    <control name="label" text="0" width="20px" backgroundColor="#00ff" /> <!-- Should be set with the team color -->
+                </panel>
+                <!-- button panel -->
+                <panel id="panel_button" childLayout="horizontal"   width="50%" align="center" valign="bottom" >
+                    <control id="playButton" name="button" label="Play" />
+                    <control id="pauseButton" name="button" label="Pause" />
+                    <control id="stopButton" name="button" label="Stop" />
+                </panel>
             </panel>
 
             <!-- Panel Team 2 -->
