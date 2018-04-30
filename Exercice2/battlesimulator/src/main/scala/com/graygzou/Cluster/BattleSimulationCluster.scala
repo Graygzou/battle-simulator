@@ -20,7 +20,10 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
   val conf = new SparkConf().setAppName(appName).setMaster(MasterURL)
   val sc = new SparkContext(conf)
 
-  var NbTurnMax = 0
+  var mainGraph: Graph[Entity, Relation] = _
+
+  var NbTurnMax = 100; // Default value
+  var currentTurn = 0;
 
   // 3D Variables
   var screenEntities: Array[Entity] = Array.empty
@@ -58,7 +61,8 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     * @param relationFile File that contains all the relation between entities.
     * @return The game graph will all the entities graph.
     */
-  private def setupGame(entitiesFile: String, relationFile: String, visualization: Boolean) : Graph[Entity, Relation] = {
+  private def setupGame(entitiesFile: String, relationFile: String, visualization: Boolean) {
+    currentTurn = 0;
     NbTurnMax = 100  // Should be in the game.txt
 
     // Load the first team data and parse into tuples of entity id and attribute list
@@ -130,8 +134,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     gameEntities = sc.parallelize(updatedGameEntities)
 
     val defaultEntity = new Entity()
-    val mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
-    mainGraph
+    mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
   }
 
   /**
@@ -141,7 +144,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     * @param visualization true if we want to render in 3D the fight, false otherwise.
     * @return
     */
-  def initGame(entitiesFile: String, relationFile: String, visualization: Boolean): Graph[Entity, Relation] = {
+  def initGame(entitiesFile: String, relationFile: String, visualization: Boolean) {
 
     val nbTeam = 2 // Should be in the entitiesFile or another.
     val TeamsNbMembers = Array(220, 220) // also
@@ -153,88 +156,62 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
 
     // Setup the first graph with given files
-    val mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile, visualization)
+    setupGame(entitiesFile, relationFile, visualization)
 
     GameUtils.printGraph(mainGraph)
-
-    mainGraph
   }
 
   /**
-    * Gameloop used for the cluster version only.
-    * @param mainGraph
-    * @return The final turn number the fight ended.
+    * Give an int corresponding of the final result
+    * -1 : everybody died during the fight.
+    * 0 : make number of turn reached, it's a tie.
+    * otherwise : the id of the winning team
+    * @return an int that represent the final result of the last fight.
     */
-  def gameloop(mainGraph: Graph[Entity, Relation]): Int = {
-
-    // Extract all the team size and store them in a structure
-    var teamMember = countTeamMember(mainGraph)
-    var currentTurn = 0
-
-    var currentGraph = mainGraph
-
-    // While their is still two teams in competition
-    // (at least one node from the last two teams)
-    while (isFightNotFinished(teamMember, currentTurn)) {
-      println("Turn n°" + currentTurn)
-
-      var updatedEntities: VertexRDD[Entity] = playOneTurn(currentGraph)
-
-      // Join the updated values to the graph
-      currentGraph = currentGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
-
-      // Filter all the dead entities from the graph
-      currentGraph = currentGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
-      if(debug) {
-        currentGraph.vertices.collect.foreach(println(_))
-      }
-
-      // Wait one second
-      Thread.sleep(1000)
-
-      // the team size based on the graph
-      teamMember = countTeamMember(currentGraph)
-
-      currentTurn += 1
-    }
-
-    println("The fight is done.")
-    if(currentTurn >= NbTurnMax) {
-      println("It's a tie !")
-    } else {
-      val entitiesLeft = currentGraph.vertices.collect()
+  def getFightResult(): Int = {
+    var result: Int = -1
+    if(currentTurn < NbTurnMax) {
+      val entitiesLeft = mainGraph.vertices.collect()
       if(entitiesLeft.length > 0) {
-        println("The winning team is : " + entitiesLeft(0)._2.getTeam ) // Get the first team
+        // Get the first team
+        result = entitiesLeft(0)._2.getTeam.id
       } else {
-        println("You are all dead !! HAHAHAHA")
+        result = -2
       }
     }
-
-    currentTurn
+    result
   }
-
-  /*
-  def getWinnerTeam(): Team.Value = {
-    return entitiesLeft(0)._2.getTeam
-  }*/
 
   /**
     * Test if the fight is still going or not.
-    * @param teamMember List that contains the number of alive entity for each team.
-    * @param currentTurn The number of the current turn.
     * @return true if the fight is still going, false otherwise.
     */
-  def isFightNotFinished(teamMember: List[Int], currentTurn: Float): Boolean = {
-    return teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax
+  def isFightNotFinished(): Boolean = {
+    return countTeamMember(mainGraph).count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax
+  }
+
+  /**
+    * Current turn number
+    * @return current turn number
+    */
+  def getCurrentTurnNumber(): Int = {
+    return currentTurn
+  }
+
+  /**
+    * Print the fight graph.
+    * TODO Make it more sexy. GameUtil printGraph ?
+    */
+  def printCurrentGraph(): Unit = {
+    mainGraph.vertices.collect.foreach(println(_))
   }
 
 
   /**
     * Play one turn of the simulation.
-    * @param mainGraph current game graph.
     * @return entities updated after this turn.
     */
-  def playOneTurn(mainGraph: Graph[Entity, Relation]): VertexRDD[Entity] = {
+  def playOneTurn(): Unit = {
     // ---------------------------------
     // Execute a turn of the game
     // ---------------------------------
@@ -294,8 +271,14 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
 
     val updatedEntities = playOneTurn.mapValues(updateEntity)
-    //updatedEntities.collect.foreach(println(_))
-    updatedEntities
+
+    // Join the updated values to the graph
+    mainGraph = mainGraph.joinVertices(updatedEntities)((_, _, newEntity) => newEntity)
+
+    // Filter all the dead entities from the graph
+    mainGraph = mainGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
+
+    currentTurn += 1
   }
 
 }
