@@ -21,7 +21,7 @@ object LauncherCluster {
     First file : contains data about the entities
     Second file : contains data about the relationship
     */
-    game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", false)
+    game.setupGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", false)
 
     /*
     Start the gameloop to play the simulation

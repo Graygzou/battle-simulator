@@ -2,6 +2,7 @@ package com.graygzou.Engine;
 
 import com.graygzou.Cluster.BattleSimulationCluster;
 import com.graygzou.Cluster.Team;
+import com.graygzou.Creatures.Entity;
 import com.graygzou.Creatures.Entity3D;
 import com.graygzou.Cluster.TeamEntities;
 import com.jme3.app.Application;
@@ -24,6 +25,30 @@ import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
 import org.apache.hadoop.mapreduce.Cluster;
+import scala.*;
+import scala.collection.*;
+import scala.collection.Iterable;
+import scala.collection.Seq;
+import scala.collection.generic.CanBuildFrom;
+import scala.collection.generic.FilterMonadic;
+import scala.collection.generic.GenericCompanion;
+import scala.collection.immutable.*;
+import scala.collection.immutable.IndexedSeq;
+import scala.collection.immutable.Map;
+import scala.collection.immutable.Set;
+import scala.collection.immutable.Traversable;
+import scala.collection.mutable.Buffer;
+import scala.collection.mutable.Builder;
+import scala.collection.mutable.StringBuilder;
+import scala.collection.parallel.Combiner;
+import scala.collection.parallel.immutable.ParIterable;
+import scala.collection.parallel.immutable.ParMap;
+import scala.math.Numeric;
+import scala.math.Ordering;
+import scala.reflect.ClassTag;
+
+import java.util.Dictionary;
+import java.util.HashMap;
 
 /**
  * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
@@ -42,9 +67,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
     private Node localRootNode = new Node("Start Screen RootNode");
     private Node localGuiNode = new Node("Start Screen GuiNode");
     private final ColorRGBA backgroundColor = ColorRGBA.Gray;
-    private Material mat_default;
+    public static Material mat_default;
 
-    private Application app;
+    public static Application app;
 
     // OTHERS
     private BattleSimulationCluster game;
@@ -99,12 +124,14 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         mat_default = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
 
         // Create the regular graph
-        game.initGame("/FightConfigs/Fight1/entities.txt", "/FightConfigs/Fight1/relations.txt", true);
+        game.setupGame("/FightConfigs/Fight1/entities3D.txt", "/FightConfigs/Fight1/relations.txt", true);
         gameEntities = new Node[game.screenEntities().length];
+
+        HashMap<String, Spatial> spatials = new HashMap<>();
 
         int actualNbEntity = 0;
         // You initialize game objects:
-        for(TeamEntities currentTeam : game.screenTeams()) {
+        for(TeamEntities currentTeam : game.screenTeams().getValue()) {
 
             int i = 0;
             while(i < currentTeam.countAliveEntity()) {
@@ -112,24 +139,12 @@ public class StartScreenState extends BaseAppState implements ScreenController {
                 // Create the node
                 gameEntities[actualNbEntity] = new Node(currentTeam.getEntities()[i].getType());
                 Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
+                System.out.println(currentEntity.getType());
 
-                // Create the model of the entity
-                currentEntity.setModelPath("Models/Teapot/Teapot.obj");
-                Spatial current_spatial = ((SimpleApplication) app).getAssetManager().loadModel("Models/Teapot/Teapot.obj");
-                // Set the life of the entity
-                current_spatial.setUserData("health", currentEntity.getHealth());
-
-                // Place the entity in the world
-                current_spatial.setLocalTranslation(currentEntity.getCurrentPosition());
-                current_spatial.center().move(currentEntity.getCurrentPosition().add(new Vector3f(0, 1f, 0)));
-
-                // Set the scale and the rotation of the entity
-                current_spatial.setLocalScale(1, 1, 1); // TODO better
-
-                // Material setup
-                Material teamColor = mat_default.clone();
-                teamColor.setColor("Color", currentTeam.getTeamColor());
-                current_spatial.setMaterial(teamColor);
+                // Create a dictionnary the model of the entity
+                // Useless : currentEntity.setModelPath("Models/Teapot/Teapot.obj");
+                Spatial currentSpatial = createEntitySpatial(currentEntity, currentTeam);
+                spatials.put(currentEntity.getType(), currentSpatial);
 
                 // Add an health bar
                 BillboardControl billboard = new BillboardControl();
@@ -138,13 +153,13 @@ public class StartScreenState extends BaseAppState implements ScreenController {
                 mathb.setColor("Color", ColorRGBA.Red);
                 healthbar.setMaterial(mathb);
                 gameEntities[actualNbEntity].attachChild(healthbar);
+                // After ?
                 healthbar.center();
-                healthbar.move(current_spatial.getLocalTranslation().add(Vector3f.ZERO));
+                healthbar.move(currentSpatial.getLocalTranslation().add(Vector3f.ZERO));
                 healthbar.addControl(billboard);
 
-
                 // Add the entity representation
-                gameEntities[actualNbEntity].attachChild(current_spatial);
+                gameEntities[actualNbEntity].attachChild(currentSpatial);
 
                 // Attach the current entity to the rootNode
                 ((SimpleApplication) app).getRootNode().attachChild(gameEntities[actualNbEntity]);
@@ -153,6 +168,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
                 actualNbEntity++;
             }
         }
+
+        // Setup node with their correct spatial
+        //game.setup3DEntities(spatials);
 
         fillMyListBoxTeams();
 
@@ -163,6 +181,26 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         // Smooth camera motion
         camera.setSmoothMotion(true);
 
+    }
+
+    public Spatial createEntitySpatial(Entity3D currentEntity, TeamEntities currentTeam) {
+        Spatial spatial = ((SimpleApplication) app).getAssetManager().loadModel("Models/Teapot/Teapot.obj");
+        // Set the life of the entity
+        spatial.setUserData("health", currentEntity.getHealth());
+
+        // Place the entity in the world
+        spatial.setLocalTranslation(currentEntity.getCurrentPosition());
+        spatial.center().move(currentEntity.getCurrentPosition().add(new Vector3f(0, 1f, 0)));
+
+        // Set the scale and the rotation of the entity
+        spatial.setLocalScale(1, 1, 1); // TODO better
+
+        // Material setup
+        Material teamColor = mat_default.clone();
+        teamColor.setColor("Color", currentTeam.getTeamColor());
+        spatial.setMaterial(teamColor);
+
+        return spatial;
     }
 
     public void nextEntityCameraFocus() {
@@ -228,9 +266,18 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
         //updateEnemy(tpf);
 
-        //game.playOneTurn();
+        game.playOneTurn();
 
-        updateHealthBars();
+        // TODO
+        //updateHealthBars();
+
+        // Wait one second
+        /*
+        try {
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
 
     }
 

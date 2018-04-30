@@ -147,7 +147,7 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
         hudText.setSize(guiFont.getCharSet().getRenderedSize()); // font size
         hudText.setColor(ColorRGBA.Red); // font color
         hudText.setText("The fight is done in " + numberOfTurn + " turn(s).");
-        hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, (settings.getHeight() / 2 - hudText.getLineHeight() / 2) + 10, 0); // position
+        hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, (settings.getHeight() * 2 / 3 - hudText.getLineHeight() / 2) + 100, 0); // position
         guiNode.attachChild(hudText);
 
         // Print the result

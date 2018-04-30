@@ -5,9 +5,13 @@
 
 package com.graygzou.Cluster
 
-import com.graygzou.Creatures.Entity
+import java.util
+
+import com.graygzou.Creatures.{Entity, Entity3D}
 import com.graygzou.Utils.GameUtils
 import com.jme3.math.ColorRGBA
+import com.jme3.scene.Spatial
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -27,7 +31,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
   // 3D Variables
   var screenEntities: Array[Entity] = Array.empty
-  var screenTeams: Array[TeamEntities] = Array.empty
+  var screenTeams: Broadcast[Array[TeamEntities]] = _
 
   /**
     * Method used to check the end of the fight
@@ -61,25 +65,34 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     * @param relationFile File that contains all the relation between entities.
     * @return The game graph will all the entities graph.
     */
-  private def setupGame(entitiesFile: String, relationFile: String, visualization: Boolean) {
+  def setupGame(entitiesFile: String, relationFile: String, visualization: Boolean) {
     currentTurn = 0
     NbTurnMax = 100  // Should be in the game.txt
+    val nbTeam = 2 // Should be in the entitiesFile or another.
+
+    setupTeams(nbTeam, Array(100, 100))
 
     // Load the first team data and parse into tuples of entity id and attribute list
     val entitiesPath = getClass.getResource(entitiesFile)
     var gameEntities : RDD[(VertexId, Entity)] = null
     if(visualization) {
-      // Load the first team data and parse into tuples of entity id and attribute list
 
+      // Load the first team data and parse into tuples of entity id and attribute list
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
         .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity3D(parts.tail)))
+
+      // Team setup
+      /*
+      gameEntities.map(entity => {
+        entity._2.setTeam(screenTeams.value(entity._2.getTeam.id))
+      })*/
     } else {
       // Load the first team data and parse into tuples of entity id and attribute list
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
         .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
-      // TODO instantiate special type like Humanoid, Dragon, ... instead of Entity
+      // TODO instantiate special type like Humanoid, Dragon, ... instead of simple Entity
     }
 
     // Retrieve screen entities
@@ -90,16 +103,16 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       screenEntities.foreach(e => println(e.toString))
     }
 
-    // Create teams
+    // Add entities to teams
     screenEntities.foreach( e => {
       println(e.getTeam.id)
-      screenTeams(e.getTeam.id).addEntity(e)
+      screenTeams.value(e.getTeam.id).addEntity(e)
     })
 
     // count in teams
     if(debug) {
-      println("Nb Team " + screenTeams.length)
-      screenTeams.foreach(t =>  println(t.toString))
+      println("Nb Team " + screenTeams.value.length)
+      screenTeams.value.foreach(t =>  println(t.toString))
     }
 
     // Parse the edge data which is already in userId -> userId format
@@ -135,30 +148,21 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
     val defaultEntity = new Entity()
     mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
+
+    GameUtils.printGraph(mainGraph)
   }
 
   /**
-    * Method called to create the initial graph of entities.
-    * @param entitiesFile file that contrains entities.
-    * @param relationFile file that contains the relationship between entities.
-    * @param visualization true if we want to render in 3D the fight, false otherwise.
-    * @return
+    * Create all the teams and store it in screenTeams
+    * @param nbTeam
+    * @param nbEntityPerTeams
     */
-  def initGame(entitiesFile: String, relationFile: String, visualization: Boolean) {
-
-    val nbTeam = 2 // Should be in the entitiesFile or another.
-    val TeamsNbMembers = Array(220, 220) // also
-
-    // Create all the teams
-    screenTeams = new Array(nbTeam)
+  def setupTeams(nbTeam: Int, nbEntityPerTeams: Array[Int]): Unit = {
+    // Make teams a broadcast variables
+    screenTeams = sc.broadcast(new Array(nbTeam))
     for (i <- 0 to (nbTeam - 1)) {
-      screenTeams(i) = new TeamEntities(ColorRGBA.randomColor(), TeamsNbMembers(i))
+      screenTeams.value(i) = new TeamEntities(ColorRGBA.randomColor(), nbEntityPerTeams(i))
     }
-
-    // Setup the first graph with given files
-    setupGame(entitiesFile, relationFile, visualization)
-
-    GameUtils.printGraph(mainGraph)
   }
 
   /**
@@ -279,6 +283,20 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     mainGraph = mainGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
 
     currentTurn += 1
+  }
+
+  def setup3DEntities(spatials : util.HashMap[String, Spatial]): Unit = {
+    mainGraph.mapVertices((id: VertexId, entity: Entity) => {
+      entity.asInstanceOf[Entity3D].setSpatial(spatials.get(entity.getType))
+    })
+  }
+
+  /**
+    * Useful for setting Spatial to the 3D entities.
+    * @param f function used on each vertex.
+    */
+  def mapFunction(f: ((VertexId, Entity) => Entity)): Unit =  {
+
   }
 
 }

@@ -8,10 +8,10 @@
 
 package com.graygzou.Creatures
 
-import com.graygzou.Cluster.{EntitiesRelationType, Team}
+import com.graygzou.Cluster.{EntitiesRelationType, Team, TeamEntities}
 import com.graygzou.Creatures.SteeringBehavior.{Fly, FlyQuality, SteeringBehavior}
 import com.graygzou.Utils.GameUtils
-import com.jme3.math.Vector3f
+import com.jme3.math.{ColorRGBA, Vector3f}
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.{SparkConf, SparkContext}
 import src.main.scala.com.graygzou.Cluster.Crawler
@@ -45,6 +45,7 @@ class Entity(args: Array[String]) extends Serializable {
   var turnDone = false
 
   protected var ownTeam = Team(0)
+  protected var teamColor = ColorRGBA.randomColor()
   protected var currentPosition : Vector3f = new Vector3f(0, 0, 0)
   protected var ownMaxSpeed = 0.0f
   protected var currentSpeed = 0.0f
@@ -116,6 +117,7 @@ class Entity(args: Array[String]) extends Serializable {
 
   // Accessors
   def getTeam: Team.Value = ownTeam
+  def getTeamColor: ColorRGBA = teamColor
   def getCurrentPosition: Vector3f = currentPosition
   def getType: String = ownType
   def getHealth: Float = currentHealth
@@ -139,6 +141,10 @@ class Entity(args: Array[String]) extends Serializable {
   def getHeal: Float = ownHeal
   def getHealRange: Float = ownHealRange
 
+
+  def setTeam(teamEntities: TeamEntities) = {
+    teamColor = teamEntities.getTeamColor()
+  }
 
   def hasHeal: Boolean = ownHeal > 0
 
