@@ -1,6 +1,7 @@
 package com.graygzou.Engine;
 
 import com.graygzou.Cluster.BattleSimulationCluster;
+import com.graygzou.Cluster.Team;
 import com.graygzou.Creatures.Entity3D;
 import com.graygzou.Cluster.TeamEntities;
 import com.jme3.app.Application;
@@ -22,6 +23,7 @@ import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
 import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
+import org.apache.hadoop.mapreduce.Cluster;
 
 /**
  * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
@@ -207,10 +209,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     @Override
     public void update(float tpf) {
-        //TODO: implement behavior during runtime
 
         // check if game is over
-        if (false) {
+        if (gameFinished) {
             if (gameFinishCountDown <= 0) {
                 cleanup();
                 //this.stop();
@@ -218,6 +219,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
             }
             gameFinishCountDown -= tpf;
             return;
+        } else if(!gameFinished && !game.isFightNotFinished()) {
+            ((Engine3D) app).printFinalResult(game.getFightResult(), game.getCurrentTurnNumber());
+            gameFinished = true;
         }
 
         //updateLasers(tpf);

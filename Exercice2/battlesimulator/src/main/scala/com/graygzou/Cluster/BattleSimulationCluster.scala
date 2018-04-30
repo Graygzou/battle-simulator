@@ -22,8 +22,8 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
   var mainGraph: Graph[Entity, Relation] = _
 
-  var NbTurnMax = 100; // Default value
-  var currentTurn = 0;
+  var NbTurnMax = 100 // Default value
+  var currentTurn = 0
 
   // 3D Variables
   var screenEntities: Array[Entity] = Array.empty
@@ -62,7 +62,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     * @return The game graph will all the entities graph.
     */
   private def setupGame(entitiesFile: String, relationFile: String, visualization: Boolean) {
-    currentTurn = 0;
+    currentTurn = 0
     NbTurnMax = 100  // Should be in the game.txt
 
     // Load the first team data and parse into tuples of entity id and attribute list

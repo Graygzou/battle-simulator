@@ -5,11 +5,14 @@
 
 package com.graygzou.Engine;
 
+import com.graygzou.Cluster.Team;
 import com.jme3.app.SimpleApplication;
+import com.jme3.font.BitmapText;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.InputListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.math.ColorRGBA;
 import com.jme3.niftygui.NiftyJmeDisplay;
 import de.lessvoid.nifty.Nifty;
 
@@ -49,11 +52,9 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
      */
     @Override
     public void simpleInitApp() {
-
         // Init the UI
         registerInput();
 
-
         NiftyJmeDisplay niftyDisplay = NiftyJmeDisplay.newNiftyJmeDisplay(
                 assetManager,
                 inputManager,
@@ -61,18 +62,6 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
                 guiViewPort);
 
         nifty = niftyDisplay.getNifty();
-         /*
-        NiftyJmeDisplay niftyDisplay = NiftyJmeDisplay.newNiftyJmeDisplay(
-                assetManager,
-                inputManager,
-                audioRenderer,
-                guiViewPort);
-
-        nifty = niftyDisplay.getNifty();
-        //nifty.fromXml("Interface/Nifty/HelloJme.xml", "start", this);
-
-        // attach the nifty display to the gui view port as a processor
-        guiViewPort.addProcessor(niftyDisplay);*/
 
         startScreenState = new StartScreenState(this);
         stateManager.attach(startScreenState);
@@ -85,9 +74,6 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
         nifty.fromXml("Interface/screen.xml", "hud", startScreenState); //one of the XML screen elements needs to reference StartScreenState controller class
 
         guiViewPort.addProcessor(niftyDisplay);
-
-        //startScreenState.bind(nifty, nifty.getScreen("hud"));
-
     }
 
     /**
@@ -153,5 +139,27 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
         if (name.equals("previousEntity") && keyPressed) {
             startScreenState.previousEntityCameraFocus();
         }
+    }
+
+    public void printFinalResult(int result, int numberOfTurn) {
+        // Print basic information
+        BitmapText hudText = new BitmapText(guiFont, false);
+        hudText.setSize(guiFont.getCharSet().getRenderedSize()); // font size
+        hudText.setColor(ColorRGBA.Red); // font color
+        hudText.setText("The fight is done in " + numberOfTurn + " turn(s).");
+        hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, (settings.getHeight() / 2 - hudText.getLineHeight() / 2) + 10, 0); // position
+        guiNode.attachChild(hudText);
+
+        // Print the result
+        BitmapText winningTeam = new BitmapText(guiFont, false);
+        winningTeam.setSize(guiFont.getCharSet().getRenderedSize());
+        winningTeam.setColor(ColorRGBA.Red);
+        switch (result) {
+            case -2: winningTeam.setText("You are all dead !! HAHAHAHA");
+            case -1: winningTeam.setText("It's a tie !");
+            default: winningTeam.setText("The winning team is : " + Team.apply(result));
+        }
+        winningTeam.setLocalTranslation(settings.getWidth() / 2 - winningTeam.getLineWidth() / 2, (settings.getHeight() / 2 - winningTeam.getLineHeight() / 2) + 10, 0);
+        guiNode.attachChild(winningTeam);
     }
 }

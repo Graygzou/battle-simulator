@@ -14,7 +14,7 @@ object LauncherCluster {
   def main(args: Array[String]): Unit = {
 
     // Init basic variables
-    val game = new BattleSimulationCluster("Fight 1", "local[*]")
+    val game = new BattleSimulationCluster("Fight 1", "local[1]")
 
     /*
     Launch the simulation with the correct files
@@ -47,10 +47,7 @@ object LauncherCluster {
       case -1 => println("It's a tie !")
       case result => println("The winning team is : " + Team(result))
     }
-
     // Clean the simulation
     game.cleanScalaContext()
-
   }
-
 }
