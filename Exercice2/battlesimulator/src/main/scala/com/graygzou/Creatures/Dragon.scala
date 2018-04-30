@@ -4,8 +4,7 @@
 
 package com.graygzou.Creatures
 
-class Dragon(args: Array[String])
-  extends Entity(args) {
+class Dragon(args: Array[String]) extends Entity(args) {
 
   /**
     * Creatures with a fly speed receive the Fly skill for free as a class skill.

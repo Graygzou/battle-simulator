@@ -1,4 +1,4 @@
-package com.graygzou.Creatures
+package com.graygzou.Utils
 
 import java.io.{BufferedWriter, File, FileWriter}
 

@@ -3,9 +3,8 @@
   * @version 0.0.1
   */
 
-package com.graygzou.Cluster
+package com.graygzou.Utils
 
-import org.apache.commons.math3.geometry.euclidean.threed.Vector3D
 import org.apache.spark.graphx.Graph
 
 import scala.util.Random

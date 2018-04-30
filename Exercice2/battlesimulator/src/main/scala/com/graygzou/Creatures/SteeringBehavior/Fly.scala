@@ -1,4 +1,4 @@
-package com.graygzou.Creatures
+package com.graygzou.Creatures.SteeringBehavior
 
 // Check : http://www.dandwiki.com/wiki/SRD:Fly
 

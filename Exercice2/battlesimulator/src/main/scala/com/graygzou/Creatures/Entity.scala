@@ -8,9 +8,9 @@
 
 package com.graygzou.Creatures
 
-import com.graygzou.Cluster.GameUtils
-import com.graygzou.Creatures.SteeringBehavior.SteeringBehavior
-import com.graygzou.{EntitiesRelationType, Team, TeamEntities}
+import com.graygzou.Cluster.{EntitiesRelationType, Team}
+import com.graygzou.Creatures.SteeringBehavior.{Fly, FlyQuality, SteeringBehavior}
+import com.graygzou.Utils.GameUtils
 import com.jme3.math.Vector3f
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.{SparkConf, SparkContext}
@@ -22,6 +22,8 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Hint : We do not used case classes for representing entities because those are not immutable data
   * (they will take damages, move around and maybe die).
+  *
+  * TODO should be abstract
   */
 class Entity(args: Array[String]) extends Serializable {
 
@@ -42,23 +44,23 @@ class Entity(args: Array[String]) extends Serializable {
   private var ownRegeneration = 0.0f
   var turnDone = false
 
-  private var ownTeam = Team(0)
-  private var currentPosition : Vector3f = new Vector3f(0, 0, 0)
-  private var ownMaxSpeed = 0.0f
-  private var currentSpeed = 0.0f
-  private var ownFlyParams = new Fly(FlyQuality.None)
-  private var ownMaxFly = 0.0f
-  private var currentFly = 0.0f
-  private var flying = false
+  protected var ownTeam = Team(0)
+  protected var currentPosition : Vector3f = new Vector3f(0, 0, 0)
+  protected var ownMaxSpeed = 0.0f
+  protected var currentSpeed = 0.0f
+  protected var ownFlyParams = new Fly(FlyQuality.None)
+  protected var ownMaxFly = 0.0f
+  protected var currentFly = 0.0f
+  protected var flying = false
 
-  private var ownHeal = 0.0f
-  private var ownHealRange = 0.0f
+  protected var ownHeal = 0.0f
+  protected var ownHealRange = 0.0f
 
-  private var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
+  protected var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
 
-  private var ownRelatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
-  private var ownMaxHealth = 0.0f
-  private var ownGoal : (VertexId,Entity)  = _
+  protected var ownRelatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
+  protected var ownMaxHealth = 0.0f
+  protected var ownGoal : (VertexId, Entity) = _
 
   var meleeMode = 0
   var rangedMode = 0
@@ -368,10 +370,14 @@ class Entity(args: Array[String]) extends Serializable {
     damages.toFloat
   }
 
+  def moveToGoal() {
+    moveToGoal(0f)
+  }
+
   /**
     * Move the entity towards it's goal
     */
-  def moveToGoal(): Unit = {
+  def moveToGoal(tpf: Float): Unit = {
 
     val targetPos = ownGoal._2.currentPosition
     var d = 0F
@@ -396,7 +402,7 @@ class Entity(args: Array[String]) extends Serializable {
       newDeltaX = if (deltaX < 0) -d else d
 
     } else if (deltaX != 0 && deltaY != 0) {
-      /* Linear function :  deltaY    = a * deltaX
+      /* Linear function :  deltaY  = a * deltaX
      *                    newDeltaY = a * newDeltaX
      * Pythagore : d² = newDeltaX² + newDeltaY² = newDeltaX² * (a²+1)
      *
@@ -569,5 +575,4 @@ class Entity(args: Array[String]) extends Serializable {
     }
     arrayDouble
   }
-
 }

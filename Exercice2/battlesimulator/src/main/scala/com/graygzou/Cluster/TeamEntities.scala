@@ -1,6 +1,6 @@
-package com.graygzou
+package com.graygzou.Cluster
 
-import com.graygzou.Creatures.{Entity, Entity3D}
+import com.graygzou.Creatures.Entity
 import com.jme3.math.ColorRGBA
 
 class TeamEntities(color:ColorRGBA, nbMember: Int) {

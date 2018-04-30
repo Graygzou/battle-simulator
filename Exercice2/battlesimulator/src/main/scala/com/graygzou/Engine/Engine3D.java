@@ -5,43 +5,13 @@
 
 package com.graygzou.Engine;
 
-import com.graygzou.Cluster.BattleSimulationCluster;
-import com.graygzou.Creatures.Entity;
-import com.graygzou.Creatures.Entity3D;
-import com.graygzou.TeamEntities;
 import com.jme3.app.SimpleApplication;
-import com.jme3.input.ChaseCamera;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.InputListener;
 import com.jme3.input.controls.KeyTrigger;
-import com.jme3.material.Material;
 import com.jme3.niftygui.NiftyJmeDisplay;
-import com.jme3.renderer.Camera;
-import com.jme3.renderer.ViewPort;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Spatial;
-import com.jme3.scene.shape.Box;
-import com.jme3.scene.shape.Quad;
-import com.jme3.texture.FrameBuffer;
-import com.jme3.texture.Image;
-import com.jme3.texture.Texture;
-import com.jme3.texture.Texture2D;
 import de.lessvoid.nifty.Nifty;
-import de.lessvoid.nifty.NiftyEventSubscriber;
-import de.lessvoid.nifty.builder.*;
-import de.lessvoid.nifty.controls.ListBox;
-import de.lessvoid.nifty.controls.ListBoxSelectionChangedEvent;
-import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
-import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
-import de.lessvoid.nifty.controls.label.builder.LabelBuilder;
-import de.lessvoid.nifty.controls.listbox.ListBoxItemController;
-import de.lessvoid.nifty.render.NiftyImage;
-import de.lessvoid.nifty.screen.DefaultScreenController;
-import de.lessvoid.nifty.screen.Screen;
-import de.lessvoid.nifty.screen.ScreenController;
-
-import java.util.List;
 
 // Custom graphe imports
 

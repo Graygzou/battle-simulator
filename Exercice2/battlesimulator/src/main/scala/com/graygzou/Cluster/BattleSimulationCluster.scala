@@ -5,27 +5,21 @@
 
 package com.graygzou.Cluster
 
-import com.graygzou.{EntitiesRelationType, Relation, Team, TeamEntities}
 import com.graygzou.Creatures.Entity
+import com.graygzou.Utils.GameUtils
 import com.jme3.math.ColorRGBA
 import org.apache.spark.graphx.{GraphLoader, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-
-
-// To make some of the examples work we will also need RDD
 
 class BattleSimulationCluster(appName: String, MasterURL: String) extends Serializable {
 
   private val debug = false
 
   // Init Scala Context
-  // Create the SparkConf and the SparkContext with the correct value
-  // Usefull for the 3D visualization
   val conf = new SparkConf().setAppName(appName).setMaster(MasterURL)
   val sc = new SparkContext(conf)
 
-  // Dummy values
   var NbTurnMax = 0
 
   // 3D Variables
@@ -39,10 +33,8 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     *         List(nbAliveTeam1, nbAliveTeam2, ..., nbAliveTeamN)
     */
   def countTeamMember(currentGraph: Graph[_,_]): List[Int] = {
-    // ----
-    // TODO : Maybe use groupBy function
-    // ----
-    var teamMember: List[Int] = List() // TODO make more generic
+    // TODO : Maybe use groupBy function ?
+    var teamMember: List[Int] = List()
     for ( team_ind <- 0 to 1 ) {
       val verticesCurrentTeam = currentGraph.vertices.filter {
         case (_, info) => info.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
@@ -83,6 +75,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
         .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
+      // TODO instantiate special type like Humanoid, Dragon, ... instead of Entity
     }
 
     // Retrieve screen entities
@@ -136,31 +129,17 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
     gameEntities = sc.parallelize(updatedGameEntities)
 
-    // Attach the users attributes
-    /*
-    val mainGraph: Graph[Entity, PartitionID] = relationGraph.outerJoinVertices(gameEntities) {
-      case (uid, deg, Some(attrList)) => {
-        println("A : " + uid)
-        println("B : " + deg )
-        println("C : " + attrList )
-        attrList
-      }
-      // Some users may not have attributes so we set them as empty
-      case (uid, deg, None) => null
-    }*/
-
     val defaultEntity = new Entity()
     val mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
     mainGraph
   }
 
   /**
-    * MergeMsg function
-    * Reduce Function : Received message
-    * 1) Sum of the damage taken
-    * 2) Check if some spells can be cast to avoid damages
-    * 3) Take damages left.
-    * TODO
+    * Method called to create the initial graph of entities.
+    * @param entitiesFile file that contrains entities.
+    * @param relationFile file that contains the relationship between entities.
+    * @param visualization true if we want to render in 3D the fight, false otherwise.
+    * @return
     */
   def initGame(entitiesFile: String, relationFile: String, visualization: Boolean): Graph[Entity, Relation] = {
 
@@ -174,13 +153,18 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
 
     // Setup the first graph with given files
-    var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile, visualization)
+    val mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile, visualization)
 
     GameUtils.printGraph(mainGraph)
 
     mainGraph
   }
 
+  /**
+    * Gameloop used for the cluster version only.
+    * @param mainGraph
+    * @return The final turn number the fight ended.
+    */
   def gameloop(mainGraph: Graph[Entity, Relation]): Int = {
 
     // Extract all the team size and store them in a structure
@@ -189,12 +173,9 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
     var currentGraph = mainGraph
 
-    // --------------
-    // Gameloop
-    // --------------
     // While their is still two teams in competition
     // (at least one node from the last two teams)
-    while (teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax) {
+    while (isFightNotFinished(teamMember, currentTurn)) {
       println("Turn n°" + currentTurn)
 
       var updatedEntities: VertexRDD[Entity] = playOneTurn(currentGraph)
@@ -223,7 +204,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     } else {
       val entitiesLeft = currentGraph.vertices.collect()
       if(entitiesLeft.length > 0) {
-        println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
+        println("The winning team is : " + entitiesLeft(0)._2.getTeam ) // Get the first team
       } else {
         println("You are all dead !! HAHAHAHA")
       }
@@ -232,7 +213,27 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     currentTurn
   }
 
+  /*
+  def getWinnerTeam(): Team.Value = {
+    return entitiesLeft(0)._2.getTeam
+  }*/
 
+  /**
+    * Test if the fight is still going or not.
+    * @param teamMember List that contains the number of alive entity for each team.
+    * @param currentTurn The number of the current turn.
+    * @return true if the fight is still going, false otherwise.
+    */
+  def isFightNotFinished(teamMember: List[Int], currentTurn: Float): Boolean = {
+    return teamMember.count((numVertices) => numVertices.!=(0)) >= 2 && currentTurn <= NbTurnMax
+  }
+
+
+  /**
+    * Play one turn of the simulation.
+    * @param mainGraph current game graph.
+    * @return entities updated after this turn.
+    */
   def playOneTurn(mainGraph: Graph[Entity, Relation]): VertexRDD[Entity] = {
     // ---------------------------------
     // Execute a turn of the game
@@ -246,37 +247,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
         * 4) Heal msg
         * 5) Move arounddef initGame(entitiesFile: String, relationFile: String): Unit = {
         *
-        * val nbTeam = 2 // Should be in the entitiesFile or another.
-        * val TeamsNbMembers = Array(100, 100) // also
-        *
-        * // Create all the teams
-        * screenTeams = new Array(nbTeam)
-        * for(i <- 0 to (nbTeam-1)) {
-        * screenTeams(i) = new TeamEntities(ColorRGBA.randomColor(), TeamsNbMembers(i))
-        * }
-        *
-        * // Init the first graph with
-        * var mainGraph: Graph[Entity, Relation] = setupGame(entitiesFile, relationFile)
-        *
-        *     GameUtils.printGraph(mainGraph)
-        *
-        * // play the game
-        * /*
-        * val currentTurn = gameloop(mainGraph)
-        *
-        * println("The fight is done.")
-        * if(currentTurn >= NbTurnMax) {
-        * println("It's a tie !")
-        * } else {
-        * val entitiesLeft = mainGraph.vertices.collect()
-        * if(entitiesLeft.length > 0) {
-        * println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
-        * } else {
-        * println("You are both dead !! HAHAHAHA")
-        * }
-        * }*/
-        * }
-        * // TODO Should check if the two node are aware of each others.
+        * TODO Should check if the two node are aware of each others.
         */
       // Map Function : Send message (Src -> Dest) and (Dest -> Src)
       // Attention : If called, this method need to be executed in the Serialize class

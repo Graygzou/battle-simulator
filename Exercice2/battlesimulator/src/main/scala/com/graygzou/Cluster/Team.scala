@@ -1,4 +1,4 @@
-package com.graygzou
+package com.graygzou.Cluster
 
 object Team extends Enumeration {
   type TeamNumber = Value

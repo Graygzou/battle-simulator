@@ -2,10 +2,11 @@ package com.graygzou.Engine;
 
 import com.graygzou.Cluster.BattleSimulationCluster;
 import com.graygzou.Creatures.Entity3D;
-import com.graygzou.TeamEntities;
+import com.graygzou.Cluster.TeamEntities;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
+import com.jme3.font.BitmapText;
 import com.jme3.input.ChaseCamera;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -209,7 +210,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         //TODO: implement behavior during runtime
 
         // check if game is over
-        if (gameFinished) {
+        if (false) {
             if (gameFinishCountDown <= 0) {
                 cleanup();
                 //this.stop();
@@ -219,15 +220,43 @@ public class StartScreenState extends BaseAppState implements ScreenController {
             return;
         }
 
-        //checkGameState(enemyHealth, playerHealth);
-
         //updateLasers(tpf);
 
         //updateEnemy(tpf);
 
+        //game.playOneTurn();
+
         updateHealthBars();
 
     }
+
+    /*
+    private void checkGameState() {
+        // check which team won the game
+        // TODO make a method in cluster that check if the game is done
+        if(entitiesLeft.length > 0) {
+            System.out.println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
+        } else {
+            println("You are all dead !! HAHAHAHA")
+        }
+        if ( <= 0) {
+            BitmapText hudText = new BitmapText(guiFont, false);
+            hudText.setSize(guiFont.getCharSet().getRenderedSize()); // font size
+            hudText.setColor(ColorRGBA.Red); // font color
+            hudText.setText("You WON !"); // the text
+            hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, settings.getHeight() / 2 - hudText.getLineHeight() / 2, 0); // position
+            guiNode.attachChild(hudText);
+            gameFinished = true;
+        } else if (playerHealth <= 0) {
+            BitmapText hudText = new BitmapText(guiFont, false);
+            hudText.setSize(guiFont.getCharSet().getRenderedSize()); // font size
+            hudText.setColor(ColorRGBA.Red); // font color
+            hudText.setText("You LOST !"); // the text
+            hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, settings.getHeight() / 2 - hudText.getLineHeight() / 2, 0); // position
+            guiNode.attachChild(hudText);
+            gameFinished = true;
+        }
+    }*/
 
     private void updateHealthBars() {
         // update health bars of all entities

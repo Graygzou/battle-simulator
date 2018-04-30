@@ -1,4 +1,4 @@
-package com.graygzou.Creatures
+package com.graygzou.Creatures.SteeringBehavior
 
 object FlyQuality extends Enumeration {
   type Maneuverability = Value

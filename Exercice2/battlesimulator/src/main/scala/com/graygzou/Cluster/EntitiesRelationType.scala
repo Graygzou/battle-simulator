@@ -1,4 +1,4 @@
-package com.graygzou
+package com.graygzou.Cluster
 
 object EntitiesRelationType extends Enumeration with Serializable {
   type relationType = Value

@@ -1,4 +1,4 @@
-package com.graygzou
+package com.graygzou.Cluster
 
 class Relation(args: Array[String]) extends Serializable {
 
