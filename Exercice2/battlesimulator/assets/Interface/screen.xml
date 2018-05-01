@@ -87,8 +87,12 @@
                 </panel>
                 <!-- button panel -->
                 <panel id="panel_button" childLayout="horizontal"   width="50%" align="center" valign="bottom" >
-                    <control id="playButton" name="button" label="Play" />
-                    <control id="pauseButton" name="button" label="Pause" />
+                    <control id="playButton" name="button" label="Play">
+                        <interact onClick="clickPlayButton()" />
+                    </control>
+                    <control id="pauseButton" name="button" label="Pause">
+                        <interact onClick="clickPauseButton()" />
+                    </control>
                     <control id="stopButton" name="button" label="Stop" />
                 </panel>
             </panel>

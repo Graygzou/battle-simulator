@@ -53,10 +53,11 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     // OTHERS
     private BattleSimulationCluster game;
+    private boolean isPlaying = false;
 
     protected Geometry player;
 
-    private int currentEntityIdFocused;
+    private int currentEntityIdFocused = 0;
 
     private ChaseCamera camera;
 
@@ -109,23 +110,19 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         localRootNode.attachChild(entities);
 
         // You initialize game objects:
-        updateEnemy();
-
-        this.fillMyListBoxTeams();
-
-        ((SimpleApplication) app).getCamera().setRotation(((SimpleApplication) app).getCamera().getRotation().fromAngleAxis(-30f, Vector3f.UNIT_Y));
-        ((SimpleApplication) app).getCamera().setLocation(new Vector3f(0,20f,0));
-        // initialize camera and variables
-        //((SimpleApplication) app).getFlyByCamera().setEnabled(false);
-        /*
-        currentEntityIdFocused = 0;
-        camera = new ChaseCamera(((SimpleApplication) app).getCamera(),
-                gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1), ((SimpleApplication) app).getInputManager());
-        // Smooth camera motion
-        camera.setSmoothMotion(true);*/
+        this.updateEnemy();
 
         this.initializeFloor();
 
+        this.fillMyListBoxTeams();
+
+        //((SimpleApplication) app).getCamera().setRotation(((SimpleApplication) app).getCamera().getRotation().fromAngleAxis(-30f, Vector3f.UNIT_Y));
+        //((SimpleApplication) app).getCamera().setLocation(new Vector3f(0,20f,0));
+        // initialize camera and variables
+        ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
+        camera = new ChaseCamera(((SimpleApplication) app).getCamera(), ((Node)entities.getChild(currentEntityIdFocused)).getChild(1), ((SimpleApplication) app).getInputManager());
+        // Smooth camera motion
+        camera.setSmoothMotion(true);
     }
 
     private void updateEnemy() {
@@ -134,9 +131,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
         // Register all the entities
         for(Entity entity : game.getEntities()) {
-            Entity3D currentEntity = (Entity3D) entity;
-            this.registerSpatial(currentEntity, currentEntity.getNode());
+            this.registerSpatial(((Entity3D) entity).getNode());
         }
+
         System.out.println("Comparaison between 'graphs'");
         for(Spatial n : entities.getChildren()) {
             System.out.println(n.toString());
@@ -146,36 +143,78 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         System.out.println("Fin Comparaison between 'graphs'");
     }
 
-    /**
-     *
-     * @param currentEntity
-     * @param currentNode
-     */
-    public void registerSpatial(Entity3D currentEntity, Node currentNode) {
-
+    public void registerSpatial(Node currentNode) {
         // Attach the current entity to the rootNode
         entities.attachChild(currentNode);
+    }
 
+    private void initializeFloor() {
+        // create a floor
+        float gridsize = floorsize / 10;
+        Box bx = new Box(gridsize / 2, 0.02f, 0.02f);
+        Material matx = mat_default.clone();
+        matx.setColor("Color", ColorRGBA.Cyan);
+        matx.setColor("GlowColor", ColorRGBA.Blue);
+        Box by = new Box(0.02f, 0.02f, gridsize / 2);
+        Material maty = mat_default.clone();
+        maty.setColor("Color", ColorRGBA.Cyan);
+        maty.setColor("GlowColor", ColorRGBA.Blue);
+
+        Box floor = new Box(gridsize / 2 - 0.01f, 0.01f, gridsize / 2 - 0.01f);
+        Material matfloor = mat_default.clone();
+        matfloor.setColor("Color", ColorRGBA.LightGray);
+
+        for (int x = (int) -gridsize * 5; x <= gridsize * 5; x++) {
+            for (int y = (int) -gridsize * 5; y <= gridsize * 5; y++) {
+                Geometry geomx = new Geometry("Grid", bx);
+                geomx.setMaterial(matx);
+                geomx.center().move(new Vector3f(x * gridsize, 0, y * gridsize + gridsize / 2));
+
+                localRootNode.attachChild(geomx);
+
+                if (y == (int) -gridsize * 5) {
+                    Geometry geomxend = geomx.clone();
+                    geomxend.center().move(new Vector3f(x * gridsize, 0, y * gridsize - gridsize / 2));
+                    localRootNode.attachChild(geomxend);
+                }
+
+                Geometry geomy = new Geometry("Grid", by);
+                geomy.setMaterial(maty);
+                geomy.center().move(new Vector3f(x * gridsize + gridsize / 2, 0, y * gridsize));
+
+                localRootNode.attachChild(geomy);
+
+                if (x == (int) -gridsize * 5) {
+                    Geometry geomyend = geomy.clone();
+                    geomyend.center().move(new Vector3f(x * gridsize - gridsize / 2, 0, y * gridsize));
+                    localRootNode.attachChild(geomyend);
+                }
+
+                Geometry geomfloor = new Geometry("Floor", floor);
+                geomfloor.setMaterial(matfloor);
+                geomfloor.center().move(new Vector3f(x * gridsize, 0, y * gridsize));
+
+                localRootNode.attachChild(geomfloor);
+            }
+        }
     }
 
 
     public void nextEntityCameraFocus() {
-    /*
-        currentEntityIdFocused = (currentEntityIdFocused + 1) % (gameEntities.values().size() - 1);
-        camera.setSpatial(gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1));
+        currentEntityIdFocused = (currentEntityIdFocused + 1) % (entities.getChildren().size() - 1);
+        camera.setSpatial(((Node)entities.getChild(currentEntityIdFocused)).getChild(1));
 
         // Smooth camera motion
-        camera.setSmoothMotion(true);*/
+        camera.setSmoothMotion(true);
     }
 
     public void previousEntityCameraFocus() {
-    /*
-        currentEntityIdFocused = (currentEntityIdFocused - 1) % (gameEntities.values().size() - 1);
-        if (currentEntityIdFocused < 0) currentEntityIdFocused += gameEntities.values().size() - 1;
-        camera.setSpatial(gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1));
+        currentEntityIdFocused = (currentEntityIdFocused - 1) % (entities.getChildren().size() - 1);
+        if (currentEntityIdFocused < 0) currentEntityIdFocused += entities.getChildren().size() - 1;
+        camera.setSpatial(((Node)entities.getChild(currentEntityIdFocused)).getChild(1));
 
         // Smooth camera motion
-        camera.setSmoothMotion(true);*/
+        camera.setSmoothMotion(true);
     }
 
     @Override
@@ -205,43 +244,45 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     @Override
     public void update(float tpf) {
+        if(isPlaying) {
 
-        // check if game is over
-        if (gameFinished) {
-            if (gameFinishCountDown <= 0) {
-                cleanup();
-                //this.stop();
+            // check if game is over
+            if (gameFinished) {
+                if (gameFinishCountDown <= 0) {
+                    cleanup();
+                    //this.stop();
+                    return;
+                }
+                gameFinishCountDown -= tpf;
                 return;
+            } else if (!gameFinished && !game.isFightNotFinished()) {
+                ((Engine3D) app).printFinalResult(game.getFightResult(), game.getCurrentTurnNumber());
+                gameFinished = true;
             }
-            gameFinishCountDown -= tpf;
-            return;
-        } else if(!gameFinished && !game.isFightNotFinished()) {
-            ((Engine3D) app).printFinalResult(game.getFightResult(), game.getCurrentTurnNumber());
-            gameFinished = true;
+
+            //updateLasers(tpf);
+
+            updateEnemy();
+
+            // Check if it's time to update the model
+            if (playNewTurnCountDown <= 0) {
+                System.out.println("Turn n°" + game.getCurrentTurnNumber());
+                game.playOneTurn(tpf);
+                playNewTurnCountDown = 1f;
+            }
+            playNewTurnCountDown -= tpf;
+
+            // TODO
+            //updateHealthBars();
+
+            // Wait one second
+            /*
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
         }
-
-        //updateLasers(tpf);
-
-        updateEnemy();
-
-        // Check if it's time to update the model
-        if (playNewTurnCountDown <= 0) {
-            System.out.println("Turn n°" + game.getCurrentTurnNumber());
-            game.playOneTurn(tpf);
-            playNewTurnCountDown = 1f;
-        }
-        playNewTurnCountDown -= tpf;
-
-        // TODO
-        //updateHealthBars();
-
-        // Wait one second
-        /*
-        try {
-            Thread.sleep(1000L);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
 
     }
 
@@ -299,55 +340,11 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         System.out.println("onEndScreen");
     }
 
-    private void initializeFloor() {
-        // create a floor
-        float gridsize = floorsize / 10;
-        Box bx = new Box(gridsize / 2, 0.02f, 0.02f);
-        Material matx = mat_default.clone();
-        matx.setColor("Color", ColorRGBA.Cyan);
-        matx.setColor("GlowColor", ColorRGBA.Blue);
-        Box by = new Box(0.02f, 0.02f, gridsize / 2);
-        Material maty = mat_default.clone();
-        maty.setColor("Color", ColorRGBA.Cyan);
-        maty.setColor("GlowColor", ColorRGBA.Blue);
-
-        Box floor = new Box(gridsize / 2 - 0.01f, 0.01f, gridsize / 2 - 0.01f);
-        Material matfloor = mat_default.clone();
-        matfloor.setColor("Color", ColorRGBA.LightGray);
-
-        for (int x = (int) -gridsize * 5; x <= gridsize * 5; x++) {
-            for (int y = (int) -gridsize * 5; y <= gridsize * 5; y++) {
-                Geometry geomx = new Geometry("Grid", bx);
-                geomx.setMaterial(matx);
-                geomx.center().move(new Vector3f(x * gridsize, 0, y * gridsize + gridsize / 2));
-
-                localRootNode.attachChild(geomx);
-
-                if (y == (int) -gridsize * 5) {
-                    Geometry geomxend = geomx.clone();
-                    geomxend.center().move(new Vector3f(x * gridsize, 0, y * gridsize - gridsize / 2));
-                    localRootNode.attachChild(geomxend);
-                }
-
-                Geometry geomy = new Geometry("Grid", by);
-                geomy.setMaterial(maty);
-                geomy.center().move(new Vector3f(x * gridsize + gridsize / 2, 0, y * gridsize));
-
-                localRootNode.attachChild(geomy);
-
-                if (x == (int) -gridsize * 5) {
-                    Geometry geomyend = geomy.clone();
-                    geomyend.center().move(new Vector3f(x * gridsize - gridsize / 2, 0, y * gridsize));
-                    localRootNode.attachChild(geomyend);
-                }
-
-                Geometry geomfloor = new Geometry("Floor", floor);
-                geomfloor.setMaterial(matfloor);
-                geomfloor.center().move(new Vector3f(x * gridsize, 0, y * gridsize));
-
-                localRootNode.attachChild(geomfloor);
-            }
-        }
+    public void clickPlayButton() {
+        isPlaying = true;
     }
 
+    public void clickPauseButton() {
+        isPlaying = false;
+    }
 }

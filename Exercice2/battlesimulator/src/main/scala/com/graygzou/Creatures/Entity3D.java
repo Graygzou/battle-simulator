@@ -156,10 +156,10 @@ public class Entity3D extends Entity implements Serializable {
     System.out.println("type: " + enemy.getType());
 
     super.setCurrentPosition(currentPosition().add(new Vector3f(0,0,8f * tpf)));
-    
+
     //this.spatial = this.spatial.rotate(0, (FastMath.DEG_TO_RAD * tpf) * 25f, 0).getLocalRotation();
     //this.spatial.lookAt(enemy.getCurrentPosition(), Vector3f.UNIT_Y); //lookAt(0, (FastMath.DEG_TO_RAD * tpf) * 10, 0);
-    this.spatial.move(this.currentPosition());
+    //this.spatial.move(this.getCurrentPosition());
   }
   // ------------------------
   // End region
