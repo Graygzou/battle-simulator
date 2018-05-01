@@ -8,6 +8,7 @@ package com.graygzou.Cluster
 import java.util
 
 import com.graygzou.Creatures.{GraphEntity, VisualizationEntity3D}
+import com.graygzou.Engine.GameScreenState
 import com.graygzou.Utils.GameUtils
 import com.jme3.math.ColorRGBA
 import com.jme3.scene.Spatial
@@ -260,9 +261,11 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       value match { case (amountAction, entity) =>
         // Update damages
         if(amountAction != 0) {
-        print("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
-        entity.takeDamages(amountAction)
-        println(entity.getHealth + "hp)")
+          GameScreenState.printInConsole("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
+          GameScreenState.printInConsole(entity.getHealth + "hp)")
+          print("Entity has been updated : "+id+ " - "+ entity.getType + " from team " + entity.getTeam + " received a total of" + amountAction + "HP (from " + entity.getHealth + "hp to ")
+          entity.takeDamages(amountAction)
+          println(entity.getHealth + "hp)")
         }
 
         // Update other fields

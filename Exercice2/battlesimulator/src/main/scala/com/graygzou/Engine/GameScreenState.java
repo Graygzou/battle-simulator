@@ -153,7 +153,9 @@ public class GameScreenState extends BaseAppState implements ScreenController {
     }
 
     public static void printInConsole(String text) {
-        GameScreenState.console.output(text);
+        if(GameScreenState.console != null) {
+            GameScreenState.console.output(text);
+        }
     }
 
     public void registerEntity() {

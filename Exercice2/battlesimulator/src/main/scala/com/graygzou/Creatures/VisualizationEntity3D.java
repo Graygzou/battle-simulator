@@ -4,6 +4,7 @@ import com.graygzou.Engine.GameScreenState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
@@ -153,28 +154,31 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
       if(!baseEntity.getCurrentPosition().equals(this.currentPosition())) {
           System.out.println("DEPLACEMENT !");
 
-          // Look at the target
-          lookAtEnemy(tpf, baseEntity.getGoal()._2);
-
           // Retrieve the current enemy
-          System.out.println(baseEntity.getGoal());
-          GraphEntity enemy = (GraphEntity) baseEntity.getGoal()._2;
+          GraphEntity enemy = baseEntity.getGoal()._2;
 
-          // Make the movement
-          System.out.println("tpf : "  + tpf);
-          //System.out.println("type: " + enemy.getType());
-
-          //this.node.move(baseEntity.getCurrentPosition());
+          // Look at the target
+          lookAtEnemy(tpf, enemy);
+          // Move
+          moveToward(tpf, baseEntity);
       }
   }
 
   public void lookAtEnemy(float tpf, GraphEntity enemy) {
       Vector3f dir = this.currentPosition().subtract(enemy.getCurrentPosition()).normalizeLocal();
-      GameScreenState.printInConsole(dir.toString());
       // Create the rotation
       rot = this.spatial.getLocalRotation();
       rot.lookAt(new Vector3f(dir.z, dir.y, dir.x).multLocal(1f, 0f, 1f), Vector3f.UNIT_Y);
       this.spatial.setLocalRotation(this.spatial.getLocalRotation());
+  }
+
+  public void moveToward(float tpf, GraphEntity baseEntity) {
+      float move = tpf * 2f; //speed
+
+      float remainingDist = this.spatial.getLocalTranslation().distance(baseEntity.getCurrentPosition()); //distance between 2 vectors
+      if (remainingDist != 0) this.spatial.setLocalTranslation(FastMath.interpolateLinear(move / remainingDist, this.spatial.getLocalTranslation(), baseEntity.getCurrentPosition()));
+
+      System.out.println(remainingDist);
   }
   // ------------------------
   // End region
