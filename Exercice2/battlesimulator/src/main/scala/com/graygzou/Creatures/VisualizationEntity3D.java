@@ -15,8 +15,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import static com.graygzou.Engine.StartScreenState.app;
-import static com.graygzou.Engine.StartScreenState.mat_default;
+import static com.graygzou.Engine.GameScreenState.app;
+import static com.graygzou.Engine.GameScreenState.mat_default;
 
 public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
@@ -36,6 +36,14 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
     // Regroup all the entity
     createEntityNode();
+  }
+
+  public VisualizationEntity3D(GraphEntity entity) {
+      this(entity.getInitialAttributes().split(","));
+      for(String s : entity.getInitialAttributes().split(",")) {
+          System.out.println(s);
+      }
+      System.out.println(this.toString());
   }
 
   public void setModelPath(String path) {

@@ -28,7 +28,7 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
 
     private Nifty nifty;
 
-    private StartScreenState startScreenState;
+    private GameScreenState gameScreenState;
 
     public Engine3D() {
 
@@ -63,15 +63,15 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
 
         nifty = niftyDisplay.getNifty();
 
-        startScreenState = new StartScreenState(this);
-        stateManager.attach(startScreenState);
+        gameScreenState = new GameScreenState(this);
+        stateManager.attach(gameScreenState);
         // [...] boilerplate init nifty omitted
         try {
             nifty.validateXml("Interface/screen.xml");
         } catch (Exception e) {
             e.printStackTrace();
         }
-        nifty.fromXml("Interface/screen.xml", "hud", startScreenState); //one of the XML screen elements needs to reference StartScreenState controller class
+        nifty.fromXml("Interface/screen.xml", "hud", gameScreenState); //one of the XML screen elements needs to reference GameScreenState controller class
 
         guiViewPort.addProcessor(niftyDisplay);
     }
@@ -134,10 +134,10 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
             //teaGeom.move(10, 10, 10);
         }
         if (name.equals("nextEntity") && keyPressed) {
-            startScreenState.nextEntityCameraFocus();
+            gameScreenState.nextEntityCameraFocus();
         }
         if (name.equals("previousEntity") && keyPressed) {
-            startScreenState.previousEntityCameraFocus();
+            gameScreenState.previousEntityCameraFocus();
         }
     }
 

@@ -27,7 +27,7 @@ import java.util.HashMap;
  * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
  * @version: 0.0.1
  */
-public class StartScreenState extends BaseAppState implements ScreenController {
+public class GameScreenState extends BaseAppState implements ScreenController {
 
     // Parameters from the bind
     private Nifty nifty;
@@ -48,7 +48,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
     public static Application app;
 
     // TEST
-    HashMap<GraphEntity, Spatial> entityVisualization;
+    HashMap<GraphEntity, VisualizationEntity3D> entityVisualization;
 
     // OTHERS
     private BattleSimulationCluster game;
@@ -60,11 +60,10 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     private ChaseCamera camera;
 
-    public StartScreenState(Engine3D engine3D) {
+    public GameScreenState(Engine3D engine3D) {
         game = new BattleSimulationCluster("Fight1", "local[1]");
         entityVisualization = new HashMap<>();
     }
-
 
     /**
      * Fill the listbox with items. In this case with Strings.
@@ -146,8 +145,12 @@ public class StartScreenState extends BaseAppState implements ScreenController {
     public void registerEntity() {
         // Attach the current entity to the rootNode
         for(GraphEntity entity : game.getEntities()) {
-            entityVisualization.put(entity, ((VisualizationEntity3D) entity).getNode());
-            entities.attachChild(entityVisualization.get(entity));
+            // We create a 3D representation of the current graph entity.
+            VisualizationEntity3D entity3D = new VisualizationEntity3D(entity);
+            // Register it.
+            entityVisualization.put(entity, entity3D);
+            // Add it to the graphe.
+            entities.attachChild(entity3D.getNode());
         }
 
     }

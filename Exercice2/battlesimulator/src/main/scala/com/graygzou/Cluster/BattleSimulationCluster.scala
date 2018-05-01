@@ -73,8 +73,9 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     // Load the first team data and parse into tuples of entity id and attribute list
     val entitiesPath = getClass.getResource(entitiesFile)
     var gameEntities : RDD[(VertexId, GraphEntity)] = null
-    if(visualization) {
 
+    /*
+    if(visualization) {
       // Load the first team data and parse into tuples of entity id and attribute list
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
@@ -85,7 +86,13 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
         .map(line => line.split(","))
         .map(parts => (parts.head.toLong, new com.graygzou.Creatures.GraphEntity(parts.tail)))
       // TODO instantiate special type like Humanoid, Dragon, ... instead of simple Entity
-    }
+    }*/
+
+    // Load the first team data and parse into tuples of entity id and attribute list
+    gameEntities = sc.textFile(entitiesPath.getPath)
+      .map(line => line.split(","))
+      .map(parts => (parts.head.toLong, new com.graygzou.Creatures.GraphEntity(parts.tail)))
+    // TODO instantiate special type like Humanoid, Dragon, ... instead of simple Entity
 
 
     if(debug) {

@@ -34,7 +34,7 @@
     <!-- Start Screen -->
     <!--              -->
     <!-- NOT YET IMPLEMENTED
-    <screen id="start" controller="com.graygzou.Engine.StartScreenState">
+    <screen id="start" controller="com.graygzou.Engine.GameScreenState>
         <layer id="background" childLayout="center" backgroundColor="#000f">
             <image filename="Interface/teapot.png"></image>
         </layer>
@@ -60,7 +60,7 @@
     <!--             -->
     <!-- In game HUD -->
     <!--             -->
-    <screen id="hud" controller="com.graygzou.Engine.StartScreenState">
+    <screen id="hud" controller="com.graygzou.Engine.GameScreenState">
         <layer id="background" childLayout="center">
 
         </layer>

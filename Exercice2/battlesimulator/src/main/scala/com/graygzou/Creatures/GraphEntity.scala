@@ -9,7 +9,7 @@
 package com.graygzou.Creatures
 
 import com.graygzou.Cluster.{EntitiesRelationType, Team, TeamEntities}
-import com.graygzou.Creatures.SteeringBehavior.{Fly, FlyQuality, SteeringBehavior}
+import com.graygzou.Creatures.SteeringBehavior.{Fly, FlyQuality}
 import com.graygzou.Utils.GameUtils
 import com.jme3.math.{ColorRGBA, Vector3f}
 import org.apache.spark.broadcast.Broadcast
@@ -67,9 +67,11 @@ class GraphEntity(args: Array[String]) extends Serializable {
   var meleeMode = 0
   var rangedMode = 0
 
+  private var modelPath = ""
+
   // no arguments constructor.
   def this() {
-    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0","0",""))
+    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0","0","",""))
   }
 
   // Function that initialize class members
@@ -81,17 +83,17 @@ class GraphEntity(args: Array[String]) extends Serializable {
     ownArmor = args(3).toFloat
     ownMeleeAttackDamage = args(4).toFloat
     ownMeleeAttackRange = args(5).toFloat
-    ownMeleeAttackPrecision = makeArray(args(6))
+    ownMeleeAttackPrecision = GameUtils.makeArray(args(6))
     ownNumberMelee = ownMeleeAttackPrecision.length
 
     ownRangedAttackDamage = args(7).toFloat
     ownRangedAttackRange = args(8).toFloat
-    ownRangedAttackPrecision = makeArray(args(9))
+    ownRangedAttackPrecision = GameUtils.makeArray(args(9))
     ownNumberRange = ownRangedAttackPrecision.length
 
     ownRegeneration = args(10).toFloat
     // Special case for position
-    currentPosition = retrievePosition(args(11))
+    currentPosition = GameUtils.retrievePosition(args(11))
     ownMaxSpeed = args(12).toFloat
     currentSpeed = args(12).toFloat
     ownFlyParams = new Fly(FlyQuality(args(13).toInt))
@@ -99,6 +101,8 @@ class GraphEntity(args: Array[String]) extends Serializable {
     currentFly = args(14).toFloat
     ownHeal = args(15).toFloat
     ownHealRange = args(16).toFloat
+    // 3D
+    modelPath = args(17)
 
     // if no range attack, replace stats with melee (or we should rewrite AI)
     if (ownRangedAttackRange == 0){
@@ -226,9 +230,17 @@ class GraphEntity(args: Array[String]) extends Serializable {
 
   // ----- Others ------
 
+  def getInitialAttributes: String = {
+    (ownTeam.id + 1) + "," + ownType + "," + ownMaxHealth + "," + ownArmor + "," + ownMeleeAttackDamage + "," + ownMeleeAttackRange +
+      "," + GameUtils.makeString(ownMeleeAttackPrecision) + "," + ownRangedAttackDamage + "," + ownRangedAttackRange + "," +
+      GameUtils.makeString(ownRangedAttackPrecision) + "," + ownRegeneration + "," + GameUtils.makeString(currentPosition) + "," + ownMaxSpeed + "," +
+      ownFlyParams.maneuverability.id + "," + ownMaxFly + "," + ownHeal + "," + ownHealRange + "," + modelPath
+  }
+
   override def toString: String =
     s"Type: $getType, Position: $getCurrentPosition, Team: $getTeam Health: $getHealth, " +
-      s"Armor: $getArmor, MeleeAttack: $getMeleeAttackDamage (rg: $getMeleeAttackRange), RangeAttack: $getRangedAttackDamage (rg: $getRangedAttackRange), Regeneration: $getRegeneration, Relations: ${getRelatedEntities.keySet}"
+      s"Armor: $getArmor, MeleeAttack: $getMeleeAttackDamage (rg: $getMeleeAttackRange), "+
+      s"RangeAttack: $getRangedAttackDamage (rg: $getRangedAttackRange), Regeneration: $getRegeneration, Relations: ${getRelatedEntities.keySet}"
 
 
   /**
@@ -561,21 +573,4 @@ class GraphEntity(args: Array[String]) extends Serializable {
     currentHealth += amount
   }
 
-  def retrievePosition(str: String) : Vector3f = {
-    var position = new Vector3f(0,0,0)
-    val coordinates : Array[Float] = makeArray(str)
-    if(coordinates.length == 3) {
-      position = new Vector3f(coordinates(0).toFloat, coordinates(1).toFloat, coordinates(2).toFloat)
-    }
-    position
-  }
-
-  def makeArray(str: String): Array[Float] = {
-    val arrayString : Array[String] = str.replace("(", "").replace(")","").split("/")
-    var arrayDouble : Array[Float] = new Array[Float](arrayString.length)
-    for (i <- arrayString.indices){
-      arrayDouble(i) = arrayString(i).toFloat
-    }
-    arrayDouble
-  }
 }
