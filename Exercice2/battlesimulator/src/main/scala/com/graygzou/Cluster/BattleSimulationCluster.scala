@@ -30,6 +30,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
   var currentTurn = 0
 
   // 3D Variables
+  // TODO : remove those variables and use the mainGraph instead.
   var screenEntities: Array[Entity] = Array.empty
   var screenTeams: Broadcast[Array[TeamEntities]] = _
 
@@ -81,12 +82,6 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
         .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity3D(parts.tail)))
-
-      // Team setup
-      /*
-      gameEntities.map(entity => {
-        entity._2.setTeam(screenTeams.value(entity._2.getTeam.id))
-      })*/
     } else {
       // Load the first team data and parse into tuples of entity id and attribute list
       gameEntities = sc.textFile(entitiesPath.getPath)
@@ -104,9 +99,9 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
 
     // Add entities to teams
-    screenEntities.foreach( e => {
-      println(e.getTeam.id)
-      screenTeams.value(e.getTeam.id).addEntity(e)
+    screenEntities.foreach( entity => {
+      entity.setTeam(screenTeams.value(entity.getTeam.id))
+      screenTeams.value(entity.getTeam.id).addEntity(entity)
     })
 
     // count in teams
@@ -210,12 +205,23 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     mainGraph.vertices.collect.foreach(println(_))
   }
 
-
   /**
     * Play one turn of the simulation.
     * @return entities updated after this turn.
     */
   def playOneTurn(): Unit = {
+    playOneTurn(0.0f)
+  }
+
+  /**
+    *
+    * @param tpf
+    */
+  def playOneTurn(tpf: Float): Unit = {
+
+    // Make tpf a broadcast variable. NOP.
+    //val currentTpf = sc.broadcast(tpf)
+
     // ---------------------------------
     // Execute a turn of the game
     // ---------------------------------
@@ -224,7 +230,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
         * SendMsg function
         * -- Should check if the opponents are aware of him (surprise round)
         * 2) Move around
-        * 3) Attacks msg (random + attack > armor => attack) or Do nothin
+        * 3) Attacks msg (random + attack > armor => attack) or Do nothing
         * 4) Heal msg
         * 5) Move arounddef initGame(entitiesFile: String, relationFile: String): Unit = {
         *
@@ -237,7 +243,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
         val distance = entitySrc.getCurrentPosition.distance(triplet.dstAttr.getCurrentPosition)
         val relationType = triplet.attr.getType
 
-        val action = entitySrc.computeIA(relationType, triplet.srcId, triplet.dstId, distance)
+        val action = entitySrc.computeIA(relationType, triplet.srcId, triplet.dstId, distance, tpf)
 
         if (action._1 == triplet.srcId){
           triplet.sendToSrc((action._2.toFloat, entitySrc))
@@ -281,6 +287,10 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
     // Filter all the dead entities from the graph
     mainGraph = mainGraph.subgraph(vpred = (_, info) => info.getHealth > 0)
+
+    // Clean the context
+    //currentTpf.unpersist()
+    //currentTpf.destroy()
 
     currentTurn += 1
   }

@@ -12,6 +12,7 @@ import com.graygzou.Cluster.{EntitiesRelationType, Team, TeamEntities}
 import com.graygzou.Creatures.SteeringBehavior.{Fly, FlyQuality, SteeringBehavior}
 import com.graygzou.Utils.GameUtils
 import com.jme3.math.{ColorRGBA, Vector3f}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.{SparkConf, SparkContext}
 import src.main.scala.com.graygzou.Cluster.Crawler
@@ -384,7 +385,7 @@ class Entity(args: Array[String]) extends Serializable {
     * Move the entity towards it's goal
     */
   def moveToGoal(tpf: Float): Unit = {
-
+    println("ICI ICI ICI")
     val targetPos = ownGoal._2.currentPosition
     var d = 0F
     if (flying) {
@@ -447,7 +448,7 @@ class Entity(args: Array[String]) extends Serializable {
       L'objectif sera mis dans une variable goal : VertexId
       On verifie dans le map que ce soit le bon objectif
    */
-  def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distanceInit: Float): (VertexId, Double) = {
+  def computeIA(relationType: EntitiesRelationType.Value, myVertexId: VertexId, itsVertexId: VertexId, distanceInit: Float, tpf: Float): (VertexId, Double) = {
 
     var action = (-3L,0D)
     var distance = distanceInit
@@ -548,7 +549,7 @@ class Entity(args: Array[String]) extends Serializable {
           }
         }
       } else {
-        moveToGoal()
+        moveToGoal(tpf)
         distance = currentPosition.distance(ownGoal._2.currentPosition)
       }
     }

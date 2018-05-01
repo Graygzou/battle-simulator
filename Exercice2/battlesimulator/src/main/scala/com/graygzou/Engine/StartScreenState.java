@@ -1,14 +1,12 @@
 package com.graygzou.Engine;
 
 import com.graygzou.Cluster.BattleSimulationCluster;
-import com.graygzou.Cluster.Team;
 import com.graygzou.Creatures.Entity;
 import com.graygzou.Creatures.Entity3D;
 import com.graygzou.Cluster.TeamEntities;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
-import com.jme3.font.BitmapText;
 import com.jme3.input.ChaseCamera;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -17,6 +15,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.BillboardControl;
+import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Quad;
 import de.lessvoid.nifty.Nifty;
 import de.lessvoid.nifty.controls.ListBox;
@@ -24,31 +23,9 @@ import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
 import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
-import org.apache.hadoop.mapreduce.Cluster;
-import scala.*;
-import scala.collection.*;
-import scala.collection.Iterable;
-import scala.collection.Seq;
-import scala.collection.generic.CanBuildFrom;
-import scala.collection.generic.FilterMonadic;
-import scala.collection.generic.GenericCompanion;
-import scala.collection.immutable.*;
-import scala.collection.immutable.IndexedSeq;
-import scala.collection.immutable.Map;
-import scala.collection.immutable.Set;
-import scala.collection.immutable.Traversable;
-import scala.collection.mutable.Buffer;
-import scala.collection.mutable.Builder;
-import scala.collection.mutable.StringBuilder;
-import scala.collection.parallel.Combiner;
-import scala.collection.parallel.immutable.ParIterable;
-import scala.collection.parallel.immutable.ParMap;
-import scala.math.Numeric;
-import scala.math.Ordering;
-import scala.reflect.ClassTag;
 
-import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
@@ -63,6 +40,8 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     private boolean gameFinished = false;
     private float gameFinishCountDown = 5f;
+    private float playNewTurnCountDown = 1f; // Play a turn each two seconds
+    private final int floorsize = 40;
 
     private Node localRootNode = new Node("Start Screen RootNode");
     private Node localGuiNode = new Node("Start Screen GuiNode");
@@ -76,7 +55,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     protected Geometry player;
 
-    private Node[] gameEntities;
+    private HashMap<Entity3D,Node> gameEntities;
     private int currentEntityIdFocused;
 
     private ChaseCamera camera;
@@ -121,100 +100,54 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
         /** init the screen */
 
-        mat_default = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+        this.mat_default = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
 
         // Create the regular graph
-        game.setupGame("/FightConfigs/Fight1/entities3D.txt", "/FightConfigs/Fight1/relations.txt", true);
-        gameEntities = new Node[game.screenEntities().length];
+        this.game.setupGame("/FightConfigs/Fight1/entities3D.txt", "/FightConfigs/Fight1/relations.txt", true);
+        this.gameEntities = new HashMap<Entity3D, Node>();
 
-        HashMap<String, Spatial> spatials = new HashMap<>();
-
-        int actualNbEntity = 0;
+        //HashMap<String, Spatial> spatials = new HashMap<>();
         // You initialize game objects:
-        for(TeamEntities currentTeam : game.screenTeams().getValue()) {
+        updateEnemy();
 
-            int i = 0;
-            while(i < currentTeam.countAliveEntity()) {
-                System.out.println(currentTeam.getEntities()[i]);
-                // Create the node
-                gameEntities[actualNbEntity] = new Node(currentTeam.getEntities()[i].getType());
-                Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
-                System.out.println(currentEntity.getType());
-
-                // Create a dictionnary the model of the entity
-                // Useless : currentEntity.setModelPath("Models/Teapot/Teapot.obj");
-                Spatial currentSpatial = createEntitySpatial(currentEntity, currentTeam);
-                spatials.put(currentEntity.getType(), currentSpatial);
-
-                // Add an health bar
-                BillboardControl billboard = new BillboardControl();
-                Geometry healthbar = new Geometry("healthbar", new Quad(3f, 0.2f));
-                Material mathb = mat_default.clone();
-                mathb.setColor("Color", ColorRGBA.Red);
-                healthbar.setMaterial(mathb);
-                gameEntities[actualNbEntity].attachChild(healthbar);
-                // After ?
-                healthbar.center();
-                healthbar.move(currentSpatial.getLocalTranslation().add(Vector3f.ZERO));
-                healthbar.addControl(billboard);
-
-                // Add the entity representation
-                gameEntities[actualNbEntity].attachChild(currentSpatial);
-
-                // Attach the current entity to the rootNode
-                ((SimpleApplication) app).getRootNode().attachChild(gameEntities[actualNbEntity]);
-
-                i++;
-                actualNbEntity++;
-            }
-        }
-
-        // Setup node with their correct spatial
-        //game.setup3DEntities(spatials);
-
-        fillMyListBoxTeams();
+        this.fillMyListBoxTeams();
 
         // initialize camera and variables
         ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
         currentEntityIdFocused = 0;
-        camera = new ChaseCamera(((SimpleApplication) app).getCamera(), gameEntities[currentEntityIdFocused].getChild(1), ((SimpleApplication) app).getInputManager());
+        camera = new ChaseCamera(((SimpleApplication) app).getCamera(),
+                gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1), ((SimpleApplication) app).getInputManager());
         // Smooth camera motion
         camera.setSmoothMotion(true);
 
+        this.initializeFloor();
+
     }
 
-    public Spatial createEntitySpatial(Entity3D currentEntity, TeamEntities currentTeam) {
-        Spatial spatial = ((SimpleApplication) app).getAssetManager().loadModel("Models/Teapot/Teapot.obj");
-        // Set the life of the entity
-        spatial.setUserData("health", currentEntity.getHealth());
+    public void registerSpatial(Entity3D currentEntity, Node currentNode) {
 
-        // Place the entity in the world
-        spatial.setLocalTranslation(currentEntity.getCurrentPosition());
-        spatial.center().move(currentEntity.getCurrentPosition().add(new Vector3f(0, 1f, 0)));
+        // Attach the current entity to the rootNode
+        ((SimpleApplication) app).getRootNode().attachChild(currentNode);
 
-        // Set the scale and the rotation of the entity
-        spatial.setLocalScale(1, 1, 1); // TODO better
-
-        // Material setup
-        Material teamColor = mat_default.clone();
-        teamColor.setColor("Color", currentTeam.getTeamColor());
-        spatial.setMaterial(teamColor);
-
-        return spatial;
+        // Register the node to the entity
+        if(gameEntities.containsKey(currentEntity)) {
+            gameEntities.remove(currentEntity);
+        }
+        gameEntities.put(currentEntity, currentNode);
     }
 
     public void nextEntityCameraFocus() {
-        currentEntityIdFocused = (currentEntityIdFocused + 1) % (gameEntities.length - 1);
-        camera.setSpatial(gameEntities[currentEntityIdFocused].getChild(1));
+        currentEntityIdFocused = (currentEntityIdFocused + 1) % (gameEntities.values().size() - 1);
+        camera.setSpatial(gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1));
 
         // Smooth camera motion
         camera.setSmoothMotion(true);
     }
 
     public void previousEntityCameraFocus() {
-        currentEntityIdFocused = (currentEntityIdFocused - 1) % (gameEntities.length - 1);
-        if (currentEntityIdFocused < 0) currentEntityIdFocused += gameEntities.length - 1;
-        camera.setSpatial(gameEntities[currentEntityIdFocused].getChild(1));
+        currentEntityIdFocused = (currentEntityIdFocused - 1) % (gameEntities.values().size() - 1);
+        if (currentEntityIdFocused < 0) currentEntityIdFocused += gameEntities.values().size() - 1;
+        camera.setSpatial(gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1));
 
         // Smooth camera motion
         camera.setSmoothMotion(true);
@@ -264,9 +197,15 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
         //updateLasers(tpf);
 
-        //updateEnemy(tpf);
+        updateEnemy();
 
-        game.playOneTurn();
+        // Check if it's time to update the model
+        if (playNewTurnCountDown <= 0) {
+            System.out.println("Turn n°" + game.getCurrentTurnNumber());
+            game.playOneTurn(tpf);
+            playNewTurnCountDown = 1f;
+        }
+        playNewTurnCountDown -= tpf;
 
         // TODO
         //updateHealthBars();
@@ -279,6 +218,20 @@ public class StartScreenState extends BaseAppState implements ScreenController {
             e.printStackTrace();
         }*/
 
+    }
+
+    private void updateEnemy() {
+        // Register all the entities
+        for(TeamEntities currentTeam : game.screenTeams().getValue()) {
+            for(int i = 0; i < currentTeam.countAliveEntity(); i++) {
+                System.out.println(currentTeam.getEntities()[i]);
+
+                Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
+                this.registerSpatial(currentEntity, currentEntity.getNode());
+            }
+        }
+        // TODO : remove those the screenXXXXXX variables.
+        game.printCurrentGraph();
     }
 
     /*
@@ -311,7 +264,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     private void updateHealthBars() {
         // update health bars of all entities
-        for(Node currentNode : gameEntities) {
+        for(Node currentNode : gameEntities.values()) {
             // TODO : Retrieve the life of the entity
             //((Quad) ((Geometry) currentNode.getChild("healthbar")).getMesh()).updateGeometry(enemyHealth / 100 * 4, 0.2f);
         }
@@ -332,6 +285,57 @@ public class StartScreenState extends BaseAppState implements ScreenController {
     @Override
     public void onEndScreen() {
         System.out.println("onEndScreen");
+    }
+
+    private void initializeFloor() {
+        // create a floor
+        float gridsize = floorsize / 10;
+        Box bx = new Box(gridsize / 2, 0.02f, 0.02f);
+        Material matx = mat_default.clone();
+        matx.setColor("Color", ColorRGBA.Cyan);
+        matx.setColor("GlowColor", ColorRGBA.Blue);
+        Box by = new Box(0.02f, 0.02f, gridsize / 2);
+        Material maty = mat_default.clone();
+        maty.setColor("Color", ColorRGBA.Cyan);
+        maty.setColor("GlowColor", ColorRGBA.Blue);
+
+        Box floor = new Box(gridsize / 2 - 0.01f, 0.01f, gridsize / 2 - 0.01f);
+        Material matfloor = mat_default.clone();
+        matfloor.setColor("Color", ColorRGBA.LightGray);
+
+        for (int x = (int) -gridsize * 5; x <= gridsize * 5; x++) {
+            for (int y = (int) -gridsize * 5; y <= gridsize * 5; y++) {
+                Geometry geomx = new Geometry("Grid", bx);
+                geomx.setMaterial(matx);
+                geomx.center().move(new Vector3f(x * gridsize, 0, y * gridsize + gridsize / 2));
+
+                ((SimpleApplication) app).getRootNode().attachChild(geomx);
+
+                if (y == (int) -gridsize * 5) {
+                    Geometry geomxend = geomx.clone();
+                    geomxend.center().move(new Vector3f(x * gridsize, 0, y * gridsize - gridsize / 2));
+                    ((SimpleApplication) app).getRootNode().attachChild(geomxend);
+                }
+
+                Geometry geomy = new Geometry("Grid", by);
+                geomy.setMaterial(maty);
+                geomy.center().move(new Vector3f(x * gridsize + gridsize / 2, 0, y * gridsize));
+
+                ((SimpleApplication) app).getRootNode().attachChild(geomy);
+
+                if (x == (int) -gridsize * 5) {
+                    Geometry geomyend = geomy.clone();
+                    geomyend.center().move(new Vector3f(x * gridsize - gridsize / 2, 0, y * gridsize));
+                    ((SimpleApplication) app).getRootNode().attachChild(geomyend);
+                }
+
+                Geometry geomfloor = new Geometry("Floor", floor);
+                geomfloor.setMaterial(matfloor);
+                geomfloor.center().move(new Vector3f(x * gridsize, 0, y * gridsize));
+
+                ((SimpleApplication) app).getRootNode().attachChild(geomfloor);
+            }
+        }
     }
 
 }
