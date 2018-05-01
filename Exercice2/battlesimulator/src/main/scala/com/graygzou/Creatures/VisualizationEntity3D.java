@@ -1,8 +1,10 @@
 package com.graygzou.Creatures;
 
+import com.graygzou.Engine.GameScreenState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
@@ -23,6 +25,8 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
   private static final long serialVersionUID = 78332556621456621L;
 
   private String modelPath;
+
+  Quaternion rot = new Quaternion();
 
   // 3D components
   private Node node;
@@ -145,18 +149,32 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
   // ------------------------
   // Region IA
   // ------------------------
-  @Override
-  public void moveToGoal(float tpf) {
-    System.out.println("DEPLACEMENT !");
-    // Retrieve the current enemy
-    VisualizationEntity3D enemy = (VisualizationEntity3D) ownGoal()._2;
-    // Make the movement
-    System.out.println("tpf : "  + tpf);
-    System.out.println("type: " + enemy.getType());
+  public void moveToGoal(float tpf, GraphEntity baseEntity) {
+      if(!baseEntity.getCurrentPosition().equals(this.currentPosition())) {
+          System.out.println("DEPLACEMENT !");
 
-    super.setCurrentPosition(currentPosition().add(new Vector3f(0,0,8f * tpf)));
+          // Look at the target
+          lookAtEnemy(tpf, baseEntity.getGoal()._2);
 
+          // Retrieve the current enemy
+          System.out.println(baseEntity.getGoal());
+          GraphEntity enemy = (GraphEntity) baseEntity.getGoal()._2;
 
+          // Make the movement
+          System.out.println("tpf : "  + tpf);
+          //System.out.println("type: " + enemy.getType());
+
+          //this.node.move(baseEntity.getCurrentPosition());
+      }
+  }
+
+  public void lookAtEnemy(float tpf, GraphEntity enemy) {
+      Vector3f dir = this.currentPosition().subtract(enemy.getCurrentPosition()).normalizeLocal();
+      GameScreenState.printInConsole(dir.toString());
+      // Create the rotation
+      rot = this.spatial.getLocalRotation();
+      rot.lookAt(new Vector3f(dir.z, dir.y, dir.x).multLocal(1f, 0f, 1f), Vector3f.UNIT_Y);
+      this.spatial.setLocalRotation(this.spatial.getLocalRotation());
   }
   // ------------------------
   // End region

@@ -16,11 +16,14 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import de.lessvoid.nifty.Nifty;
+import de.lessvoid.nifty.controls.Console;
+import de.lessvoid.nifty.controls.ConsoleCommands;
 import de.lessvoid.nifty.controls.ListBox;
 import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
 import de.lessvoid.nifty.render.NiftyImage;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
+import org.apache.commons.lang.ObjectUtils;
 
 import java.util.HashMap;
 
@@ -49,7 +52,8 @@ public class GameScreenState extends BaseAppState implements ScreenController {
     public static Application app;
 
     // TEST
-    HashMap<GraphEntity, VisualizationEntity3D> entityVisualization;
+    public static HashMap<String, VisualizationEntity3D> entityVisualization;
+    public static Console console;
 
     // OTHERS
     private BattleSimulationCluster game;
@@ -124,24 +128,32 @@ public class GameScreenState extends BaseAppState implements ScreenController {
         camera = new ChaseCamera(((SimpleApplication) app).getCamera(), ((Node)entities.getChild(currentEntityIdFocused)).getChild(1), ((SimpleApplication) app).getInputManager());
         // Smooth camera motion
         camera.setSmoothMotion(true);
+
+        // TEST
+        // get the console control (this assumes that there is a console in the current screen with the id="console"
+        this.console = screen.findNiftyControl("console", Console.class);
+
+        // create the console commands class and attach it to the console
+        //ConsoleCommands consoleCommands = new ConsoleCommands(nifty, console);
+
+        // create a simple command (see below for implementation) this class will be called when the command is detected
+        // and register the command as a command with the console
+        //ConsoleCommands.ConsoleCommand simpleCommand = new SimpleCommand();
+        //consoleCommands.registerCommand("simple", simpleCommand);
+
+        // create another command (this time we can even register arguments with nifty so that the command completion will work with arguments too)
+        /*ConsoleCommands.ConsoleCommand showCommand = new ShowCommand();
+        consoleCommands.registerCommand("show a", showCommand);
+        consoleCommands.registerCommand("show b", showCommand);
+        consoleCommands.registerCommand("show c", showCommand);*/
+
+        // finally enable command completion
+        //consoleCommands.enableCommandCompletion(true);
+
     }
 
-    private void updateEnemy() {
-        // flush all the previous entities.
-        //entities.detachAllChildren();
-
-        for(GraphEntity entity : game.getEntities()) {
-            // TODO ICI
-            entityVisualization.get(entity);
-        }
-
-        System.out.println("Comparaison between 'graphs'");
-        for(Spatial n : entities.getChildren()) {
-            System.out.println(n.toString());
-        }
-        System.out.println("============================");
-        game.printCurrentGraph();
-        System.out.println("Fin Comparaison between 'graphs'");
+    public static void printInConsole(String text) {
+        GameScreenState.console.output(text);
     }
 
     public void registerEntity() {
@@ -150,7 +162,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
             // We create a 3D representation of the current graph entity.
             VisualizationEntity3D entity3D = new VisualizationEntity3D(entity);
             // Register it.
-            entityVisualization.put(entity, entity3D);
+            entityVisualization.put(entity.getType(), entity3D);
             // Add it to the graph.
             entities.attachChild(entity3D.getNode());
         }
@@ -271,7 +283,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
             //updateLasers(tpf);
 
-            updateEnemy();
+            updateEnemy(tpf);
 
             // Check if it's time to update the model
             if (playNewTurnCountDown <= 0) {
@@ -295,33 +307,25 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
     }
 
-    /*
-    private void checkGameState() {
-        // check which team won the game
-        // TODO make a method in cluster that check if the game is done
-        if(entitiesLeft.length > 0) {
-            System.out.println("The winning team is : " + entitiesLeft(0)._2.getTeam) // Get the first team
-        } else {
-            println("You are all dead !! HAHAHAHA")
+    private void updateEnemy(float tpf) {
+        // flush all the previous entities.
+        //entities.detachAllChildren();
+
+        for(GraphEntity entity : game.getEntities()) {
+            // Retrieve the 3D representation of the current entity
+            if(entityVisualization.containsKey(entity.getType())) {
+                entityVisualization.get(entity.getType()).moveToGoal(tpf, entity);
+            }
         }
-        if ( <= 0) {
-            BitmapText hudText = new BitmapText(guiFont, false);
-            hudText.setSize(guiFont.getCharSet().getRenderedSize()); // font size
-            hudText.setColor(ColorRGBA.Red); // font color
-            hudText.setText("You WON !"); // the text
-            hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, settings.getHeight() / 2 - hudText.getLineHeight() / 2, 0); // position
-            guiNode.attachChild(hudText);
-            gameFinished = true;
-        } else if (playerHealth <= 0) {
-            BitmapText hudText = new BitmapText(guiFont, false);
-            hudText.setSize(guiFont.getCharSet().getRenderedSize()); // font size
-            hudText.setColor(ColorRGBA.Red); // font color
-            hudText.setText("You LOST !"); // the text
-            hudText.setLocalTranslation(settings.getWidth() / 2 - hudText.getLineWidth() / 2, settings.getHeight() / 2 - hudText.getLineHeight() / 2, 0); // position
-            guiNode.attachChild(hudText);
-            gameFinished = true;
+
+        System.out.println("Comparaison between 'graphs'");
+        for(Spatial n : entities.getChildren()) {
+            System.out.println(n.toString());
         }
-    }*/
+        System.out.println("============================");
+        game.printCurrentGraph();
+        System.out.println("Fin Comparaison between 'graphs'");
+    }
 
     private void updateHealthBars() {
         // update health bars of all entities

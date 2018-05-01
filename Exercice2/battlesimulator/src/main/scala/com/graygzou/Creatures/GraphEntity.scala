@@ -10,12 +10,10 @@ package com.graygzou.Creatures
 
 import com.graygzou.Cluster.{EntitiesRelationType, Team, TeamEntities}
 import com.graygzou.Creatures.SteeringBehavior.{Fly, FlyQuality}
+import com.graygzou.Engine.GameScreenState
 import com.graygzou.Utils.GameUtils
 import com.jme3.math.{ColorRGBA, Vector3f}
-import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.graphx.VertexId
-import org.apache.spark.{SparkConf, SparkContext}
-import src.main.scala.com.graygzou.Cluster.Crawler
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ArrayBuffer
@@ -386,14 +384,12 @@ class GraphEntity(args: Array[String]) extends Serializable {
     damages.toFloat
   }
 
-  def moveToGoal() {
-    moveToGoal(0f)
-  }
-
   /**
     * Move the entity towards it's goal
     */
-  def moveToGoal(tpf: Float): Unit = {
+  def moveToGoal(): Unit = {
+    GameScreenState.printInConsole(this.getType + ": MoveToGoal => " + ownGoal._2.getType + "" + ownGoal._2.getCurrentPosition.toString)
+    println("Decide to move")
     val targetPos = ownGoal._2.currentPosition
     var d = 0F
     if (flying) {
@@ -502,12 +498,14 @@ class GraphEntity(args: Array[String]) extends Serializable {
               if (distance < ownHealRange) {
                 action = (ownGoal._1, ownHeal + GameUtils.rollDice(10))
                 turnDone = true
+                GameScreenState.printInConsole(this.getType + ": Heal => " + ownGoal._2.getType)
               } else if (potentialAllyInRange){
                 // Ally can be reached with movement
                 moveToGoal()
                 distance = currentPosition.distance(ownGoal._2.currentPosition)
                 action = (ownGoal._1, ownHeal + GameUtils.rollDice(10))
                 turnDone = true
+                GameScreenState.printInConsole(this.getType + ": Heal => " + ownGoal._2.getType )
               } else {
                 // Ally isn't in range, entity should try to attack the closest enemy if it is in range
                 ownGoal = result._2
@@ -531,6 +529,7 @@ class GraphEntity(args: Array[String]) extends Serializable {
                     action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision, rangedMode))
                   }
                   turnDone = true
+                  GameScreenState.printInConsole(this.getType + ": Attack => " + ownGoal._2.getType)
                 }
               }
             } else {
@@ -553,11 +552,12 @@ class GraphEntity(args: Array[String]) extends Serializable {
                 action = (ownGoal._1, -computeDamages(ownRangedAttackDamage, ownRangedAttackPrecision, rangedMode))
               }
               turnDone = true
+              GameScreenState.printInConsole(this.getType + ": Attack => " + ownGoal._2.getType)
             }
           }
         }
       } else {
-        moveToGoal(tpf)
+        moveToGoal()
         distance = currentPosition.distance(ownGoal._2.currentPosition)
       }
     }

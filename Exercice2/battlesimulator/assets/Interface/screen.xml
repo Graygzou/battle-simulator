@@ -62,6 +62,9 @@
     <!--             -->
     <screen id="hud" controller="com.graygzou.Engine.GameScreenState">
         <layer id="background" childLayout="center">
+            <panel id="panel_middle" childLayout="horizontal" width="60%" height="30%" align="center" valign="bottom">
+                <control id="console" name="nifty-console" lines="10" />
+            </panel>
 
         </layer>
 
@@ -86,7 +89,8 @@
                     <control name="label" text="0" width="20px" backgroundColor="#00ff" /> <!-- Should be set with the team color -->
                 </panel>
                 <!-- button panel -->
-                <panel id="panel_button" childLayout="horizontal"   width="50%" align="center" valign="bottom" >
+                <panel id="panel_button" childLayout="horizontal"  width="50%" align="center" valign="bottom" >
+
                     <control id="playButton" name="button" label="Play">
                         <interact onClick="clickPlayButton()" />
                     </control>
