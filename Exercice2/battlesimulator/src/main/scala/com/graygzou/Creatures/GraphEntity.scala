@@ -26,7 +26,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * TODO should be abstract
   */
-class Entity(args: Array[String]) extends Serializable {
+class GraphEntity(args: Array[String]) extends Serializable {
 
   //var crawler = new Crawler
 
@@ -60,14 +60,12 @@ class Entity(args: Array[String]) extends Serializable {
 
   protected var ownSpells : ArrayBuffer[String] = new ArrayBuffer[String]()
 
-  protected var ownRelatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
+  protected var ownRelatedEntities : HashMap[VertexId, (GraphEntity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(GraphEntity,EntitiesRelationType.Value)]
   protected var ownMaxHealth = 0.0f
-  protected var ownGoal : (VertexId, Entity) = _
+  protected var ownGoal : (VertexId, GraphEntity) = _
 
   var meleeMode = 0
   var rangedMode = 0
-  // Used to make the agent move in the game
-  //var steeringBehaviorModule = new SteeringBehavior()
 
   // no arguments constructor.
   def this() {
@@ -131,9 +129,9 @@ class Entity(args: Array[String]) extends Serializable {
   def getRangedAttackPrecision: Array[Float] = ownRangedAttackPrecision
   def getRegeneration: Float = ownRegeneration
   def getSpells: ArrayBuffer[String] = ownSpells
-  def getRelatedEntities: HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = ownRelatedEntities
+  def getRelatedEntities: HashMap[VertexId, (GraphEntity,EntitiesRelationType.Value)] = ownRelatedEntities
   def getMaxHealth: Float = ownMaxHealth
-  def getGoal: (VertexId,Entity) = ownGoal
+  def getGoal: (VertexId,GraphEntity) = ownGoal
   def getMaxSpeed: Float = ownMaxSpeed
   def getCurrentSpeed: Float = currentSpeed
   def getMaxFly: Float = ownMaxFly
@@ -164,7 +162,7 @@ class Entity(args: Array[String]) extends Serializable {
   }
 
   def updateRelatedEntities(): Unit = {
-    var relatedEntities : HashMap[VertexId, (Entity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(Entity,EntitiesRelationType.Value)]
+    var relatedEntities : HashMap[VertexId, (GraphEntity,EntitiesRelationType.Value)] = HashMap.empty[VertexId,(GraphEntity,EntitiesRelationType.Value)]
     for (entity <- ownRelatedEntities) {
       if (entity._2._1.getHealth > 0) {
         relatedEntities += entity
@@ -173,13 +171,13 @@ class Entity(args: Array[String]) extends Serializable {
     ownRelatedEntities = relatedEntities
   }
 
-  def addRelativeEntity(vertexId: VertexId, entity: Entity, relation: EntitiesRelationType.Value): Unit = {
+  def addRelativeEntity(vertexId: VertexId, entity: GraphEntity, relation: EntitiesRelationType.Value): Unit = {
     ownRelatedEntities += (vertexId -> (entity, relation))
   }
   // Functions that will be used for the simulation
 
   // Attack
-  def attack(target:Entity, damages: Double): Unit =
+  def attack(target:GraphEntity, damages: Double): Unit =
     println(s"I'm attacking ${target.toString} with the current damages $damages")
 
 
@@ -238,10 +236,10 @@ class Entity(args: Array[String]) extends Serializable {
     * @param range range of the search
     * @return tuple of the entities nearby and the closest enemy
     */
-  def searchEntitiesNearby(range: Double) : (ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))], (VertexId, (Entity, EntitiesRelationType.Value))) = {
-    var nearbyEntities = new ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))]()
+  def searchEntitiesNearby(range: Double) : (ArrayBuffer[(VertexId, (GraphEntity, EntitiesRelationType.Value))], (VertexId, (GraphEntity, EntitiesRelationType.Value))) = {
+    var nearbyEntities = new ArrayBuffer[(VertexId, (GraphEntity, EntitiesRelationType.Value))]()
     var firstIteration = true
-    var closestEnemy: (VertexId, (Entity, EntitiesRelationType.Value)) = null
+    var closestEnemy: (VertexId, (GraphEntity, EntitiesRelationType.Value)) = null
     for(entity <- ownRelatedEntities){
       if (entity._2._1.getCurrentPosition.distance(currentPosition) <= range) {
         nearbyEntities += entity
@@ -266,10 +264,10 @@ class Entity(args: Array[String]) extends Serializable {
     * @param minPercentage under what % of the maxHP should an entity be considered worth to be healed
     * @return tuple with a boolean (true if someone should be healed) and the entity
     */
-  def findMostWoundedAlly(nearbyEntities: ArrayBuffer[(VertexId, (Entity, EntitiesRelationType.Value))], minHealth: Double, minPercentage: Double ):(Boolean, (VertexId,Entity)) = {
+  def findMostWoundedAlly(nearbyEntities: ArrayBuffer[(VertexId, (GraphEntity, EntitiesRelationType.Value))], minHealth: Double, minPercentage: Double ):(Boolean, (VertexId,GraphEntity)) = {
     var foundOne = false
-    var ally: (VertexId, (Entity, EntitiesRelationType.Value)) = (0L,(this, EntitiesRelationType.Ally))
-    var allyId: (VertexId,Entity) = (0L, this)
+    var ally: (VertexId, (GraphEntity, EntitiesRelationType.Value)) = (0L,(this, EntitiesRelationType.Ally))
+    var allyId: (VertexId,GraphEntity) = (0L, this)
     for (entity <- nearbyEntities){
       if (entity._2._2 == EntitiesRelationType.Ally){
         if (entity._2._1.getHealth <= minPercentage*entity._2._1.getMaxHealth && entity._2._1.getMaxHealth >= minHealth) {
@@ -300,7 +298,7 @@ class Entity(args: Array[String]) extends Serializable {
     * @return Tuple with a boolean to know if a goal exists and vertexId of the closest enemy (except if the goal is
     *         the entity itself)
     */
-  def searchGoal(myVertexId: VertexId, range: Double): (Boolean, (VertexId, Entity)) = {
+  def searchGoal(myVertexId: VertexId, range: Double): (Boolean, (VertexId, GraphEntity)) = {
     /* Search a goal :
      *    - Priority 1 : heal yourself (HP under 40%)
      *    - Priority 2 : find the most wounded ally to heal (HP under 40% and ally can't be killed in 1-2 hits)
@@ -468,7 +466,7 @@ class Entity(args: Array[String]) extends Serializable {
     if (!turnDone) {
       // Search a goal
       var potentialAllyInRange = false
-      var result: (Boolean,(VertexId,Entity)) = (false, (1L,this))
+      var result: (Boolean,(VertexId,GraphEntity)) = (false, (1L,this))
 
       if (hasHeal) {
         val range = if (flying) Math.sqrt(Math.pow(ownHealRange + currentFly,2)-Math.pow(currentPosition.z,2)) else ownHealRange + currentSpeed

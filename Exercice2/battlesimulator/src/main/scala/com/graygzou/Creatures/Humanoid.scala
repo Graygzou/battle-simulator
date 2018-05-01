@@ -5,7 +5,7 @@
 package com.graygzou.Creatures
 
 class Humanoid(args: Array[String])
-  extends Entity(args) {
+  extends GraphEntity(args) {
 
   /*
   override def initClassFields() =

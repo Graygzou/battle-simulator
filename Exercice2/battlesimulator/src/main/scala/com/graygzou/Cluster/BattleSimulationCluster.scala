@@ -7,7 +7,7 @@ package com.graygzou.Cluster
 
 import java.util
 
-import com.graygzou.Creatures.{Entity, Entity3D}
+import com.graygzou.Creatures.{GraphEntity, VisualizationEntity3D}
 import com.graygzou.Utils.GameUtils
 import com.jme3.math.ColorRGBA
 import com.jme3.scene.Spatial
@@ -24,7 +24,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
   val conf = new SparkConf().setAppName(appName).setMaster(MasterURL)
   val sc = new SparkContext(conf)
 
-  var mainGraph: Graph[Entity, Relation] = _
+  var mainGraph: Graph[GraphEntity, Relation] = _
 
   var NbTurnMax = 100 // Default value
   var currentTurn = 0
@@ -42,7 +42,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     var teamMember: List[Int] = List()
     for ( team_ind <- 0 to 1 ) {
       val verticesCurrentTeam = currentGraph.vertices.filter {
-        case (_, info) => info.asInstanceOf[Entity].getTeam.equals(Team(team_ind))
+        case (_, info) => info.asInstanceOf[GraphEntity].getTeam.equals(Team(team_ind))
         case _ => false
       }.count()
       teamMember = verticesCurrentTeam.toInt :: teamMember
@@ -72,24 +72,24 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
 
     // Load the first team data and parse into tuples of entity id and attribute list
     val entitiesPath = getClass.getResource(entitiesFile)
-    var gameEntities : RDD[(VertexId, Entity)] = null
+    var gameEntities : RDD[(VertexId, GraphEntity)] = null
     if(visualization) {
 
       // Load the first team data and parse into tuples of entity id and attribute list
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
-        .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity3D(parts.tail)))
+        .map(parts => (parts.head.toLong, new VisualizationEntity3D(parts.tail)))
     } else {
       // Load the first team data and parse into tuples of entity id and attribute list
       gameEntities = sc.textFile(entitiesPath.getPath)
         .map(line => line.split(","))
-        .map(parts => (parts.head.toLong, new com.graygzou.Creatures.Entity(parts.tail)))
+        .map(parts => (parts.head.toLong, new com.graygzou.Creatures.GraphEntity(parts.tail)))
       // TODO instantiate special type like Humanoid, Dragon, ... instead of simple Entity
     }
 
 
     if(debug) {
-      val screenEntities : Array[Entity] = gameEntities.map(x => x._2).collect
+      val screenEntities : Array[GraphEntity] = gameEntities.map(x => x._2).collect
       println("Nb Entity: " + screenEntities.length)
       screenEntities.foreach(e => println("print e: " + e.toString))
     }
@@ -130,7 +130,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       gameEntitiesList(relation.srcId).addRelativeEntity(relationId, gameEntitiesList(relationId), relation.attr.getType)
     }
 
-    val updatedGameEntities = new Array[(VertexId, Entity)](gameEntitiesList.keySet.size)
+    val updatedGameEntities = new Array[(VertexId, GraphEntity)](gameEntitiesList.keySet.size)
     var i = 0
     for (key <- gameEntitiesList.keySet) {
       updatedGameEntities(i) = (key, gameEntitiesList(key))
@@ -138,7 +138,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
     gameEntities = sc.parallelize(updatedGameEntities)
 
-    val defaultEntity = new Entity()
+    val defaultEntity = new GraphEntity()
     mainGraph = Graph(gameEntities, relationGraph, defaultEntity)
 
     GameUtils.printGraph(mainGraph)
@@ -157,7 +157,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     }
   }
 
-  def getEntities(): Array[Entity] = {
+  def getEntities(): Array[GraphEntity] = {
     // Collect entities and return them
     mainGraph.vertices.map(_._2).collect()
   }
@@ -228,7 +228,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     // ---------------------------------
     // Execute a turn of the game
     // ---------------------------------
-    val playOneTurn: VertexRDD[(Float, Entity)] = mainGraph.aggregateMessages[(Float, Entity)](
+    val playOneTurn: VertexRDD[(Float, GraphEntity)] = mainGraph.aggregateMessages[(Float, GraphEntity)](
       /**
         * SendMsg function
         * -- Should check if the opponents are aware of him (surprise round)
@@ -263,7 +263,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     )
 
     // Update the entities health points with corresponding messages (heals or attacks)
-    val updateEntity = (id: VertexId, value : (Float, Entity)) => {
+    val updateEntity = (id: VertexId, value : (Float, GraphEntity)) => {
       value match { case (amountAction, entity) =>
         // Update damages
         if(amountAction != 0) {
@@ -299,8 +299,8 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
   }
 
   def setup3DEntities(spatials : util.HashMap[String, Spatial]): Unit = {
-    mainGraph.mapVertices((id: VertexId, entity: Entity) => {
-      entity.asInstanceOf[Entity3D].setSpatial(spatials.get(entity.getType))
+    mainGraph.mapVertices((id: VertexId, entity: GraphEntity) => {
+      entity.asInstanceOf[VisualizationEntity3D].setSpatial(spatials.get(entity.getType))
     })
   }
 
@@ -308,7 +308,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     * Useful for setting Spatial to the 3D entities.
     * @param f function used on each vertex.
     */
-  def mapFunction(f: ((VertexId, Entity) => Entity)): Unit =  {
+  def mapFunction(f: ((VertexId, GraphEntity) => GraphEntity)): Unit =  {
 
   }
 

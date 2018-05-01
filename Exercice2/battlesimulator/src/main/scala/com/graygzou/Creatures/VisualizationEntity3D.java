@@ -1,11 +1,8 @@
 package com.graygzou.Creatures;
 
-import com.graygzou.Cluster.TeamEntities;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.FastMath;
-import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
@@ -21,20 +18,18 @@ import java.io.Serializable;
 import static com.graygzou.Engine.StartScreenState.app;
 import static com.graygzou.Engine.StartScreenState.mat_default;
 
-public class Entity3D extends Entity implements Serializable {
+public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   private static final long serialVersionUID = 78332556621456621L;
 
   private String modelPath;
-
-  private Quaternion currentRotation;
 
   // 3D components
   private Node node;
   private Spatial spatial;
   private Geometry healthbar;
 
-  public Entity3D(String[] args) {
+  public VisualizationEntity3D(String[] args) {
     super(args);
     // Special setup
     this.modelPath = args[args.length-1];
@@ -150,16 +145,14 @@ public class Entity3D extends Entity implements Serializable {
   public void moveToGoal(float tpf) {
     System.out.println("DEPLACEMENT !");
     // Retrieve the current enemy
-    Entity3D enemy = (Entity3D) ownGoal()._2;
+    VisualizationEntity3D enemy = (VisualizationEntity3D) ownGoal()._2;
     // Make the movement
     System.out.println("tpf : "  + tpf);
     System.out.println("type: " + enemy.getType());
 
     super.setCurrentPosition(currentPosition().add(new Vector3f(0,0,8f * tpf)));
 
-    //this.spatial = this.spatial.rotate(0, (FastMath.DEG_TO_RAD * tpf) * 25f, 0).getLocalRotation();
-    //this.spatial.lookAt(enemy.getCurrentPosition(), Vector3f.UNIT_Y); //lookAt(0, (FastMath.DEG_TO_RAD * tpf) * 10, 0);
-    //this.spatial.move(this.getCurrentPosition());
+
   }
   // ------------------------
   // End region

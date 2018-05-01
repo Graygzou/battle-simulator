@@ -1,9 +1,8 @@
 package com.graygzou.Engine;
 
 import com.graygzou.Cluster.BattleSimulationCluster;
-import com.graygzou.Creatures.Entity;
-import com.graygzou.Creatures.Entity3D;
-import com.graygzou.Cluster.TeamEntities;
+import com.graygzou.Creatures.GraphEntity;
+import com.graygzou.Creatures.VisualizationEntity3D;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
@@ -14,9 +13,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.jme3.scene.control.BillboardControl;
 import com.jme3.scene.shape.Box;
-import com.jme3.scene.shape.Quad;
 import de.lessvoid.nifty.Nifty;
 import de.lessvoid.nifty.controls.ListBox;
 import de.lessvoid.nifty.controls.chatcontrol.ChatEntryModelClass;
@@ -25,7 +22,6 @@ import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
 
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
@@ -51,6 +47,9 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     public static Application app;
 
+    // TEST
+    HashMap<GraphEntity, Spatial> entityVisualization;
+
     // OTHERS
     private BattleSimulationCluster game;
     private boolean isPlaying = false;
@@ -63,6 +62,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     public StartScreenState(Engine3D engine3D) {
         game = new BattleSimulationCluster("Fight1", "local[1]");
+        entityVisualization = new HashMap<>();
     }
 
 
@@ -109,8 +109,8 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         // This does everything
         localRootNode.attachChild(entities);
 
-        // You initialize game objects:
-        this.updateEnemy();
+        // You initialize game objects and register them one
+        this.registerEntity();
 
         this.initializeFloor();
 
@@ -127,11 +127,11 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     private void updateEnemy() {
         // flush all the previous entities.
-        entities.detachAllChildren();
+        //entities.detachAllChildren();
 
-        // Register all the entities
-        for(Entity entity : game.getEntities()) {
-            this.registerSpatial(((Entity3D) entity).getNode());
+        for(GraphEntity entity : game.getEntities()) {
+            // TODO ICI
+            entityVisualization.get(entity);
         }
 
         System.out.println("Comparaison between 'graphs'");
@@ -143,9 +143,13 @@ public class StartScreenState extends BaseAppState implements ScreenController {
         System.out.println("Fin Comparaison between 'graphs'");
     }
 
-    public void registerSpatial(Node currentNode) {
+    public void registerEntity() {
         // Attach the current entity to the rootNode
-        entities.attachChild(currentNode);
+        for(GraphEntity entity : game.getEntities()) {
+            entityVisualization.put(entity, ((VisualizationEntity3D) entity).getNode());
+            entities.attachChild(entityVisualization.get(entity));
+        }
+
     }
 
     private void initializeFloor() {
