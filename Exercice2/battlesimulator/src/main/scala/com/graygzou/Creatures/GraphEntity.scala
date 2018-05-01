@@ -393,45 +393,45 @@ class GraphEntity(args: Array[String]) extends Serializable {
     val targetPos = ownGoal._2.currentPosition
     var d = 0F
     if (flying) {
-      val distance = Math.sqrt(Math.pow(currentPosition.x - targetPos.x, 2) + Math.pow(currentPosition.y - targetPos.y, 2))
+      val distance = Math.sqrt(Math.pow(currentPosition.x - targetPos.x, 2) + Math.pow(currentPosition.z - targetPos.z, 2))
       d = if (currentFly > distance) (currentFly - distance).toFloat else currentFly.toFloat
     } else {
-      val distance = if(targetPos.z > 0) Math.sqrt(Math.pow(currentPosition.x - targetPos.x, 2) + Math.pow(currentPosition.y - targetPos.y, 2)) else targetPos.distance(currentPosition)
+      val distance = if(targetPos.y > 0) Math.sqrt(Math.pow(currentPosition.x - targetPos.x, 2) + Math.pow(currentPosition.z - targetPos.z, 2)) else targetPos.distance(currentPosition)
       d = if (currentSpeed > distance) (currentSpeed - distance).toFloat else currentSpeed.toFloat
     }
 
     val deltaX = targetPos.x - currentPosition.x
-    val deltaY = targetPos.y - currentPosition.y
+    val deltaZ = targetPos.z - currentPosition.z
 
     var newDeltaX = deltaX
-    var newDeltaY = deltaY
+    var newDeltaZ = deltaZ
 
-    if (deltaX == 0 && deltaY != 0) {
-      newDeltaY = if (deltaY < 0) -d else d
+    if (deltaX == 0 && deltaZ != 0) {
+      newDeltaZ = if (deltaZ < 0) -d else d
 
-    } else if (deltaY == 0 && deltaY != 0) {
+    } else if (deltaZ == 0 && deltaZ != 0) {
       newDeltaX = if (deltaX < 0) -d else d
 
-    } else if (deltaX != 0 && deltaY != 0) {
-      /* Linear function :  deltaY  = a * deltaX
-     *                    newDeltaY = a * newDeltaX
-     * Pythagore : d² = newDeltaX² + newDeltaY² = newDeltaX² * (a²+1)
+    } else if (deltaX != 0 && deltaZ != 0) {
+      /* Linear function :  deltaZ  = a * deltaX
+     *                    newDeltaZ = a * newDeltaX
+     * Pythagore : d² = newDeltaX² + newDeltaZ² = newDeltaX² * (a²+1)
      *
      * => newDeltaX = d / sqrt(a²+1)
      */
 
       // Compute new coordinates
-      val a = deltaY / deltaX
+      val a = deltaZ / deltaX
       newDeltaX = (d / Math.sqrt(a * a + 1)).toFloat
-      newDeltaY = newDeltaX * a
+      newDeltaZ = newDeltaX * a
 
       if (deltaX > 0) newDeltaX = Math.abs(newDeltaX) else newDeltaX = -Math.abs(newDeltaX)
-      if (deltaY > 0) newDeltaY = Math.abs(newDeltaY) else newDeltaY = -Math.abs(newDeltaY)
+      if (deltaZ > 0) newDeltaZ = Math.abs(newDeltaZ) else newDeltaZ = -Math.abs(newDeltaZ)
     }
 
     // Update entity
     currentPosition.x += newDeltaX
-    currentPosition.y += newDeltaY
+    currentPosition.z += newDeltaZ
     if (flying) {
       currentFly -= d
     } else {
