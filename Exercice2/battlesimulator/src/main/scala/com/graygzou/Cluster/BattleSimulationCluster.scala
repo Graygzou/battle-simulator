@@ -29,10 +29,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
   var NbTurnMax = 100 // Default value
   var currentTurn = 0
 
-  // 3D Variables
-  // TODO : remove those variables and use the mainGraph instead.
-  var screenEntities: Array[Entity] = Array.empty
-  var screenTeams: Broadcast[Array[TeamEntities]] = _
+  var screenTeamsColor: Array[ColorRGBA] = _
 
   /**
     * Method used to check the end of the fight
@@ -90,24 +87,24 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
       // TODO instantiate special type like Humanoid, Dragon, ... instead of simple Entity
     }
 
-    // Retrieve screen entities
-    screenEntities = gameEntities.map(x => x._2).collect
 
     if(debug) {
+      val screenEntities : Array[Entity] = gameEntities.map(x => x._2).collect
       println("Nb Entity: " + screenEntities.length)
-      screenEntities.foreach(e => println(e.toString))
+      screenEntities.foreach(e => println("print e: " + e.toString))
     }
 
     // Add entities to teams
-    screenEntities.foreach( entity => {
-      entity.setTeam(screenTeams.value(entity.getTeam.id))
-      screenTeams.value(entity.getTeam.id).addEntity(entity)
+    gameEntities.map(x => x._2).collect.foreach( entity => {
+      entity.setTeamColor(screenTeamsColor(entity.getTeam.id))
     })
 
     // count in teams
     if(debug) {
-      println("Nb Team " + screenTeams.value.length)
-      screenTeams.value.foreach(t =>  println(t.toString))
+      screenTeamsColor.foreach(color => {
+        println("Team: " + color)
+        gameEntities.map(_._2).filter(entity => entity.getTeamColor.equals(color)).collect.foreach(t =>  println("print Team" + color + " , t:" + t.toString))
+      })
     }
 
     // Parse the edge data which is already in userId -> userId format
@@ -154,10 +151,15 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     */
   def setupTeams(nbTeam: Int, nbEntityPerTeams: Array[Int]): Unit = {
     // Make teams a broadcast variables
-    screenTeams = sc.broadcast(new Array(nbTeam))
+    screenTeamsColor = new Array(nbTeam)
     for (i <- 0 to (nbTeam - 1)) {
-      screenTeams.value(i) = new TeamEntities(ColorRGBA.randomColor(), nbEntityPerTeams(i))
+      screenTeamsColor(i) = ColorRGBA.randomColor()
     }
+  }
+
+  def getEntities(): Array[Entity] = {
+    // Collect entities and return them
+    mainGraph.vertices.map(_._2).collect()
   }
 
   /**
@@ -202,6 +204,7 @@ class BattleSimulationCluster(appName: String, MasterURL: String) extends Serial
     * TODO Make it more sexy. GameUtil printGraph ?
     */
   def printCurrentGraph(): Unit = {
+    println("PRINT THE GRAPHE !")
     mainGraph.vertices.collect.foreach(println(_))
   }
 

@@ -47,12 +47,12 @@ public class Entity3D extends Entity implements Serializable {
 
   public void setSpatial(Spatial spatial) {
     this.spatial = spatial;
-    System.out.println(this.spatial);
+    System.out.println("Set spatial: " + this.spatial);
   }
 
   @Override
-  public void setTeam(TeamEntities teamEntities) {
-    super.setTeam(teamEntities);
+  public void setTeamColor(ColorRGBA color) {
+    super.setTeamColor(color);
     setMaterialSpatial();
   }
 
@@ -103,7 +103,7 @@ public class Entity3D extends Entity implements Serializable {
 
     // Place the entity in the world
     this.spatial.setLocalTranslation(this.getCurrentPosition());
-    System.out.println(this.getCurrentPosition());
+    System.out.println("Current position: " + this.getCurrentPosition());
     this.spatial.center().move(this.getCurrentPosition().add(new Vector3f(0, 1f, 0)));
 
     // Set the scale and the rotation of the entity
@@ -151,10 +151,10 @@ public class Entity3D extends Entity implements Serializable {
     Entity3D enemy = (Entity3D) ownGoal()._2;
     // Make the movement
     System.out.println("tpf : "  + tpf);
-    System.out.println(enemy.getType());
+    System.out.println("type: " + enemy.getType());
     this.spatial.rotate(0, (FastMath.DEG_TO_RAD * tpf) * 25f, 0);
     this.spatial.lookAt(enemy.getCurrentPosition(), Vector3f.UNIT_Y); //lookAt(0, (FastMath.DEG_TO_RAD * tpf) * 10, 0);
-    this.spatial.move(this.spatial.getLocalRotation().mult(new Vector3f(0, 0, 8f * tpf)));
+    //this.spatial.move(this.spatial.getLocalRotation().mult(new Vector3f(0, 0, 0.1f * tpf)));
   }
   // ------------------------
   // End region

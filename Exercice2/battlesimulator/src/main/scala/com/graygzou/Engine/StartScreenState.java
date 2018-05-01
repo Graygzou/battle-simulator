@@ -45,6 +45,7 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     private Node localRootNode = new Node("Start Screen RootNode");
     private Node localGuiNode = new Node("Start Screen GuiNode");
+    private Node entities = new Node("Entities");
     private final ColorRGBA backgroundColor = ColorRGBA.Gray;
     public static Material mat_default;
 
@@ -55,7 +56,6 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     protected Geometry player;
 
-    private HashMap<Entity3D,Node> gameEntities;
     private int currentEntityIdFocused;
 
     private ChaseCamera camera;
@@ -104,53 +104,78 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
         // Create the regular graph
         this.game.setupGame("/FightConfigs/Fight1/entities3D.txt", "/FightConfigs/Fight1/relations.txt", true);
-        this.gameEntities = new HashMap<Entity3D, Node>();
 
-        //HashMap<String, Spatial> spatials = new HashMap<>();
+        // This does everything
+        localRootNode.attachChild(entities);
+
         // You initialize game objects:
         updateEnemy();
 
         this.fillMyListBoxTeams();
 
+        ((SimpleApplication) app).getCamera().setRotation(((SimpleApplication) app).getCamera().getRotation().fromAngleAxis(-30f, Vector3f.UNIT_Y));
+        ((SimpleApplication) app).getCamera().setLocation(new Vector3f(0,20f,0));
         // initialize camera and variables
-        ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
+        //((SimpleApplication) app).getFlyByCamera().setEnabled(false);
+        /*
         currentEntityIdFocused = 0;
         camera = new ChaseCamera(((SimpleApplication) app).getCamera(),
                 gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1), ((SimpleApplication) app).getInputManager());
         // Smooth camera motion
-        camera.setSmoothMotion(true);
+        camera.setSmoothMotion(true);*/
 
         this.initializeFloor();
 
     }
 
+    private void updateEnemy() {
+        // flush all the previous entities.
+        entities.detachAllChildren();
+
+        // Register all the entities
+        for(Entity entity : game.getEntities()) {
+            Entity3D currentEntity = (Entity3D) entity;
+            this.registerSpatial(currentEntity, currentEntity.getNode());
+        }
+        System.out.println("Comparaison between 'graphs'");
+        for(Spatial n : entities.getChildren()) {
+            System.out.println(n.toString());
+        }
+        System.out.println("============================");
+        game.printCurrentGraph();
+        System.out.println("Fin Comparaison between 'graphs'");
+    }
+
+    /**
+     *
+     * @param currentEntity
+     * @param currentNode
+     */
     public void registerSpatial(Entity3D currentEntity, Node currentNode) {
 
         // Attach the current entity to the rootNode
-        ((SimpleApplication) app).getRootNode().attachChild(currentNode);
+        entities.attachChild(currentNode);
 
-        // Register the node to the entity
-        if(gameEntities.containsKey(currentEntity)) {
-            gameEntities.remove(currentEntity);
-        }
-        gameEntities.put(currentEntity, currentNode);
     }
 
+
     public void nextEntityCameraFocus() {
+    /*
         currentEntityIdFocused = (currentEntityIdFocused + 1) % (gameEntities.values().size() - 1);
         camera.setSpatial(gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1));
 
         // Smooth camera motion
-        camera.setSmoothMotion(true);
+        camera.setSmoothMotion(true);*/
     }
 
     public void previousEntityCameraFocus() {
+    /*
         currentEntityIdFocused = (currentEntityIdFocused - 1) % (gameEntities.values().size() - 1);
         if (currentEntityIdFocused < 0) currentEntityIdFocused += gameEntities.values().size() - 1;
         camera.setSpatial(gameEntities.values().toArray(new Node[gameEntities.values().size()])[currentEntityIdFocused].getChild(1));
 
         // Smooth camera motion
-        camera.setSmoothMotion(true);
+        camera.setSmoothMotion(true);*/
     }
 
     @Override
@@ -220,20 +245,6 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     }
 
-    private void updateEnemy() {
-        // Register all the entities
-        for(TeamEntities currentTeam : game.screenTeams().getValue()) {
-            for(int i = 0; i < currentTeam.countAliveEntity(); i++) {
-                System.out.println(currentTeam.getEntities()[i]);
-
-                Entity3D currentEntity = (Entity3D) currentTeam.getEntities()[i];
-                this.registerSpatial(currentEntity, currentEntity.getNode());
-            }
-        }
-        // TODO : remove those the screenXXXXXX variables.
-        game.printCurrentGraph();
-    }
-
     /*
     private void checkGameState() {
         // check which team won the game
@@ -264,10 +275,11 @@ public class StartScreenState extends BaseAppState implements ScreenController {
 
     private void updateHealthBars() {
         // update health bars of all entities
+        /*
         for(Node currentNode : gameEntities.values()) {
             // TODO : Retrieve the life of the entity
             //((Quad) ((Geometry) currentNode.getChild("healthbar")).getMesh()).updateGeometry(enemyHealth / 100 * 4, 0.2f);
-        }
+        }*/
     }
 
     @Override
@@ -309,31 +321,31 @@ public class StartScreenState extends BaseAppState implements ScreenController {
                 geomx.setMaterial(matx);
                 geomx.center().move(new Vector3f(x * gridsize, 0, y * gridsize + gridsize / 2));
 
-                ((SimpleApplication) app).getRootNode().attachChild(geomx);
+                localRootNode.attachChild(geomx);
 
                 if (y == (int) -gridsize * 5) {
                     Geometry geomxend = geomx.clone();
                     geomxend.center().move(new Vector3f(x * gridsize, 0, y * gridsize - gridsize / 2));
-                    ((SimpleApplication) app).getRootNode().attachChild(geomxend);
+                    localRootNode.attachChild(geomxend);
                 }
 
                 Geometry geomy = new Geometry("Grid", by);
                 geomy.setMaterial(maty);
                 geomy.center().move(new Vector3f(x * gridsize + gridsize / 2, 0, y * gridsize));
 
-                ((SimpleApplication) app).getRootNode().attachChild(geomy);
+                localRootNode.attachChild(geomy);
 
                 if (x == (int) -gridsize * 5) {
                     Geometry geomyend = geomy.clone();
                     geomyend.center().move(new Vector3f(x * gridsize - gridsize / 2, 0, y * gridsize));
-                    ((SimpleApplication) app).getRootNode().attachChild(geomyend);
+                    localRootNode.attachChild(geomyend);
                 }
 
                 Geometry geomfloor = new Geometry("Floor", floor);
                 geomfloor.setMaterial(matfloor);
                 geomfloor.center().move(new Vector3f(x * gridsize, 0, y * gridsize));
 
-                ((SimpleApplication) app).getRootNode().attachChild(geomfloor);
+                localRootNode.attachChild(geomfloor);
             }
         }
     }

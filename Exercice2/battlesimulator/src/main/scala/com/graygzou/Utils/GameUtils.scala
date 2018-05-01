@@ -22,7 +22,7 @@ object GameUtils {
 
   def printGraph(mainGraph: Graph[_,_]): Unit = {
     mainGraph.triplets.map(
-      triplet => triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
+      triplet => "printGraphUtils : " + triplet.srcAttr + " = " + triplet.attr + " = " + triplet.dstAttr
     ).collect.foreach(println(_))
   }
 

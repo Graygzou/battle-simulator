@@ -143,8 +143,8 @@ class Entity(args: Array[String]) extends Serializable {
   def getHealRange: Float = ownHealRange
 
 
-  def setTeam(teamEntities: TeamEntities) = {
-    teamColor = teamEntities.getTeamColor()
+  def setTeamColor(color: ColorRGBA) = {
+    teamColor = color
   }
 
   def hasHeal: Boolean = ownHeal > 0
@@ -385,7 +385,6 @@ class Entity(args: Array[String]) extends Serializable {
     * Move the entity towards it's goal
     */
   def moveToGoal(tpf: Float): Unit = {
-    println("ICI ICI ICI")
     val targetPos = ownGoal._2.currentPosition
     var d = 0F
     if (flying) {
