@@ -5,6 +5,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
@@ -26,11 +27,12 @@ public class Entity3D extends Entity implements Serializable {
 
   private String modelPath;
 
-  // Single component
+  private Quaternion currentRotation;
+
+  // 3D components
+  private Node node;
   private Spatial spatial;
   private Geometry healthbar;
-
-  private Node node;
 
   public Entity3D(String[] args) {
     super(args);
@@ -152,9 +154,12 @@ public class Entity3D extends Entity implements Serializable {
     // Make the movement
     System.out.println("tpf : "  + tpf);
     System.out.println("type: " + enemy.getType());
-    this.spatial.rotate(0, (FastMath.DEG_TO_RAD * tpf) * 25f, 0);
-    this.spatial.lookAt(enemy.getCurrentPosition(), Vector3f.UNIT_Y); //lookAt(0, (FastMath.DEG_TO_RAD * tpf) * 10, 0);
-    //this.spatial.move(this.spatial.getLocalRotation().mult(new Vector3f(0, 0, 0.1f * tpf)));
+
+    super.setCurrentPosition(currentPosition().add(new Vector3f(0,0,8f * tpf)));
+    
+    //this.spatial = this.spatial.rotate(0, (FastMath.DEG_TO_RAD * tpf) * 25f, 0).getLocalRotation();
+    //this.spatial.lookAt(enemy.getCurrentPosition(), Vector3f.UNIT_Y); //lookAt(0, (FastMath.DEG_TO_RAD * tpf) * 10, 0);
+    this.spatial.move(this.currentPosition());
   }
   // ------------------------
   // End region

@@ -142,10 +142,9 @@ class Entity(args: Array[String]) extends Serializable {
   def getHeal: Float = ownHeal
   def getHealRange: Float = ownHealRange
 
+  def setCurrentPosition(newPosition: Vector3f) = currentPosition = newPosition
 
-  def setTeamColor(color: ColorRGBA) = {
-    teamColor = color
-  }
+  def setTeamColor(color: ColorRGBA) = teamColor = color
 
   def hasHeal: Boolean = ownHeal > 0
 
