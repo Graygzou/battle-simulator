@@ -1,6 +1,7 @@
 package com.graygzou.Engine;
 
 import com.graygzou.Cluster.BattleSimulationCluster;
+import com.graygzou.Cluster.Team;
 import com.graygzou.Creatures.GraphEntity;
 import com.graygzou.Creatures.VisualizationEntity3D;
 import com.jme3.app.Application;
@@ -69,19 +70,22 @@ public class GameScreenState extends BaseAppState implements ScreenController {
      * Fill the listbox with items. In this case with Strings.
      */
     public void fillMyListBoxTeams() {
+        // Basic image
+        NiftyImage newImage = nifty.getRenderEngine().createImage(this.screen, "/Interface/teapot.png",false);
 
         // TEAM 1
-        ListBox<ChatEntryModelClass> listBox1 = (ListBox<ChatEntryModelClass>) this.screen.findNiftyControl("listBoxTeam1", ListBox.class);
-        NiftyImage newImage = nifty.getRenderEngine().createImage(this.screen, "/Interface/teapot.png",false);
-        // false means don't linear filter the image, true would apply linear filtering
-        listBox1.addItem(new ChatEntryModelClass("orc1", newImage));
-        listBox1.addItem(new ChatEntryModelClass("orc2", newImage));
-
+        ListBox<ChatEntryModelClass> listTeam1 = (ListBox<ChatEntryModelClass>) this.screen.findNiftyControl("listBoxTeam1", ListBox.class);
         // TEAM 2
-        ListBox<ChatEntryModelClass> listBox2 = (ListBox<ChatEntryModelClass>) screen.findNiftyControl("listBoxTeam2", ListBox.class);
-        // false means don't linear filter the image, true would apply linear filtering
-        listBox2.addItem(new ChatEntryModelClass("Angel Random", newImage));
-        listBox2.addItem(new ChatEntryModelClass("Angel Slayer d'orcs", newImage));
+        ListBox<ChatEntryModelClass> listTeam2 = (ListBox<ChatEntryModelClass>) screen.findNiftyControl("listBoxTeam2", ListBox.class);
+
+        for(VisualizationEntity3D currentEntity : entityVisualization.values()) {
+            if(currentEntity.getTeam().equals(Team.apply(0))) {
+                listTeam1.addItem(new ChatEntryModelClass(currentEntity.getType(), newImage));
+                // TODO should be currentEntity.getImage()
+            } else {
+                listTeam2.addItem(new ChatEntryModelClass(currentEntity.getType(), newImage));
+            }
+        }
     }
 
     @Override
@@ -97,7 +101,6 @@ public class GameScreenState extends BaseAppState implements ScreenController {
         ((SimpleApplication) app).getGuiNode().attachChild(localGuiNode);
         ((SimpleApplication) app).getViewPort().setBackgroundColor(backgroundColor);
 
-
         /** init the screen */
 
         this.mat_default = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
@@ -110,10 +113,9 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
         // You initialize game objects and register them one
         this.registerEntity();
+        this.fillMyListBoxTeams();
 
         this.initializeFloor();
-
-        this.fillMyListBoxTeams();
 
         //((SimpleApplication) app).getCamera().setRotation(((SimpleApplication) app).getCamera().getRotation().fromAngleAxis(-30f, Vector3f.UNIT_Y));
         //((SimpleApplication) app).getCamera().setLocation(new Vector3f(0,20f,0));
@@ -149,7 +151,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
             VisualizationEntity3D entity3D = new VisualizationEntity3D(entity);
             // Register it.
             entityVisualization.put(entity, entity3D);
-            // Add it to the graphe.
+            // Add it to the graph.
             entities.attachChild(entity3D.getNode());
         }
 

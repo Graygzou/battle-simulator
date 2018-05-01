@@ -40,10 +40,6 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   public VisualizationEntity3D(GraphEntity entity) {
       this(entity.getInitialAttributes().split(","));
-      for(String s : entity.getInitialAttributes().split(",")) {
-          System.out.println(s);
-      }
-      System.out.println(this.toString());
   }
 
   public void setModelPath(String path) {
