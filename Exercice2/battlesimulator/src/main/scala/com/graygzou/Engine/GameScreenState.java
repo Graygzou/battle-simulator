@@ -121,18 +121,16 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
         this.initializeFloor();
 
-        //((SimpleApplication) app).getCamera().setRotation(((SimpleApplication) app).getCamera().getRotation().fromAngleAxis(-30f, Vector3f.UNIT_Y));
-        //((SimpleApplication) app).getCamera().setLocation(new Vector3f(0,20f,0));
         // initialize camera and variables
         ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
         camera = new ChaseCamera(((SimpleApplication) app).getCamera(), ((Node)entities.getChild(currentEntityIdFocused)).getChild(1), ((SimpleApplication) app).getInputManager());
         // Smooth camera motion
         camera.setSmoothMotion(true);
 
-        // TEST
         // get the console control (this assumes that there is a console in the current screen with the id="console"
         this.console = screen.findNiftyControl("console", Console.class);
 
+        // Useless ?
         // create the console commands class and attach it to the console
         //ConsoleCommands consoleCommands = new ConsoleCommands(nifty, console);
 

@@ -27,8 +27,6 @@
                     <interact onClick="listBoxItemClicked()" />
                 </control>
             </panel>
-            <panel childLayout="horizontal" width="100%" height="10px" align="center" backgroundColor="#f00f">
-            </panel>
         </panel>
     </controlDefinition>
 

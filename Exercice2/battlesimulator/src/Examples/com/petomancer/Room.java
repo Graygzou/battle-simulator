@@ -1,4 +1,4 @@
-package com.petomancer;
+package petomancer;
 
 import java.util.ArrayList;
 import java.util.HashMap;

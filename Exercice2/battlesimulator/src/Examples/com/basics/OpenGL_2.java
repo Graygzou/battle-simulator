@@ -1,4 +1,4 @@
-package com.basics;
+package basics;
 
 
 import com.jme3.app.SimpleApplication;

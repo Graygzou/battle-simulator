@@ -47,6 +47,12 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   public VisualizationEntity3D(GraphEntity entity) {
       this(entity.getInitialAttributes().split(","));
+      if(entity.getTeam().id() == 0) {
+          this.setTeamColor(ColorRGBA.Red);
+      } else {
+          this.setTeamColor(ColorRGBA.Blue);
+      }
+
   }
 
   public void setModelPath(String path) {
@@ -129,7 +135,7 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   private void createHealthBar() {
     BillboardControl billboard = new BillboardControl();
-    this.healthbar = new Geometry("healthbar", new Quad(MAXHEALTH-2, 0.2f));
+    this.healthbar = new Geometry("healthbar", new Quad(MAXHEALTH, 0.2f));
     Material mathb = mat_default.clone();
     mathb.setColor("Color", ColorRGBA.Red);
     this.healthbar.setMaterial(mathb);

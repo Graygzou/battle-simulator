@@ -1,4 +1,4 @@
-package com.petomancer;
+package petomancer;
 
 
 import com.jme3.app.SimpleApplication;

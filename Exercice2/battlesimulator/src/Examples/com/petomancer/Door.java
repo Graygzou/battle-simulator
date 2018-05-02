@@ -1,4 +1,4 @@
-package com.petomancer;
+package petomancer;
 
 /**
  * A Door links two rooms in the dungeon
