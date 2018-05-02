@@ -24,15 +24,17 @@ import static com.graygzou.Engine.GameScreenState.mat_default;
 public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   private static final long serialVersionUID = 78332556621456621L;
+  private final float MAXHEALTH = 3f;
 
   private String modelPath;
-
-  Quaternion rot = new Quaternion();
 
   // 3D components
   private Node node;
   private Spatial spatial;
   private Geometry healthbar;
+
+  private Quaternion rot = new Quaternion();
+  private boolean updated = false;
 
   public VisualizationEntity3D(String[] args) {
     super(args);
@@ -59,13 +61,13 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
   @Override
   public void setTeamColor(ColorRGBA color) {
     super.setTeamColor(color);
-    setMaterialSpatial();
+    setMaterialSpatial(this.getTeamColor());
   }
 
-  public void setMaterialSpatial() {
+  public void setMaterialSpatial(ColorRGBA color) {
     // Material setup
     Material teamColor = mat_default.clone();
-    teamColor.setColor("Color", this.getTeamColor());
+    teamColor.setColor("Color", color);
     this.spatial.setMaterial(teamColor);
   }
 
@@ -75,6 +77,14 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   public Node getNode() {
     return this.node;
+  }
+
+  public boolean hasBeenUpdated() {
+      return updated;
+  }
+
+  public void resetUpdateState() {
+      updated = false;
   }
 
   /**
@@ -104,7 +114,7 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
   // ------------------------
   private void createEntitySpatial() {
     this.spatial = ((SimpleApplication) app).getAssetManager().loadModel(this.modelPath);
-    // Set the life of the entity
+    // Set the life of the entity. Useless here
     this.spatial.setUserData("health", this.getHealth());
 
     // Place the entity in the world
@@ -119,7 +129,7 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
   private void createHealthBar() {
     BillboardControl billboard = new BillboardControl();
-    this.healthbar = new Geometry("healthbar", new Quad(3f, 0.2f));
+    this.healthbar = new Geometry("healthbar", new Quad(MAXHEALTH-2, 0.2f));
     Material mathb = mat_default.clone();
     mathb.setColor("Color", ColorRGBA.Red);
     this.healthbar.setMaterial(mathb);
@@ -135,7 +145,7 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
     // Create components
     createEntitySpatial();
-    setMaterialSpatial();
+    setMaterialSpatial(this.getTeamColor());
     createHealthBar();
 
     // Add them
@@ -148,12 +158,19 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
   // ------------------------
 
   // ------------------------
-  // Region IA
+  // Region Steering Behavior
   // ------------------------
+
+  public void update(float tpf, GraphEntity baseEntity) {
+      updated = true;
+      // Steering Behavior
+      updateHealthBar(baseEntity);
+      // Health update
+      moveToGoal(tpf, baseEntity);
+  }
+
   public void moveToGoal(float tpf, GraphEntity baseEntity) {
       if(!baseEntity.getCurrentPosition().equals(this.currentPosition())) {
-          System.out.println("DEPLACEMENT !");
-
           // Retrieve the current enemy
           GraphEntity enemy = baseEntity.getGoal()._2;
 
@@ -162,6 +179,11 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
           // Move
           moveToward(tpf, baseEntity);
       }
+  }
+
+  private void updateHealthBar(GraphEntity baseEntity) {
+      float size = baseEntity.getHealth() / baseEntity.getMaxHealth() * MAXHEALTH;
+      ((Quad) ((Geometry) this.healthbar).getMesh()).updateGeometry(size, 0.2f);
   }
 
   public void lookAtEnemy(float tpf, GraphEntity enemy) {
@@ -177,10 +199,19 @@ public class VisualizationEntity3D extends GraphEntity implements Serializable {
 
       float remainingDist = this.spatial.getLocalTranslation().distance(baseEntity.getCurrentPosition()); //distance between 2 vectors
       if (remainingDist != 0) this.spatial.setLocalTranslation(FastMath.interpolateLinear(move / remainingDist, this.spatial.getLocalTranslation(), baseEntity.getCurrentPosition()));
-
-      System.out.println(remainingDist);
+      // move the healthbar too
+      this.healthbar.center();
+      this.healthbar.move(this.spatial.getLocalTranslation().add(Vector3f.ZERO));
   }
-  // ------------------------
-  // End region
+
+    public void kill() {
+      this.spatial.setLocalScale(1, 0, 1);
+      this.setMaterialSpatial(ColorRGBA.Red);
+
+      // Set health to zero
+        ((Quad) ((Geometry) this.healthbar).getMesh()).updateGeometry(0.0f, 0.2f);
+    }
+    // ------------------------
+  // End region steering behavior
   // ------------------------
 }

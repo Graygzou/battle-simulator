@@ -25,7 +25,7 @@ import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
 import org.apache.commons.lang.ObjectUtils;
 
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author: Grégoire Boiron <gregoire.boiron@gmail.com>
@@ -191,31 +191,31 @@ public class GameScreenState extends BaseAppState implements ScreenController {
             for (int y = (int) -gridsize * 5; y <= gridsize * 5; y++) {
                 Geometry geomx = new Geometry("Grid", bx);
                 geomx.setMaterial(matx);
-                geomx.center().move(new Vector3f(x * gridsize, 0, y * gridsize + gridsize / 2));
+                geomx.center().move(new Vector3f(x * gridsize, 0.7f, y * gridsize + gridsize / 2));
 
                 localRootNode.attachChild(geomx);
 
                 if (y == (int) -gridsize * 5) {
                     Geometry geomxend = geomx.clone();
-                    geomxend.center().move(new Vector3f(x * gridsize, 0, y * gridsize - gridsize / 2));
+                    geomxend.center().move(new Vector3f(x * gridsize, 0.7f, y * gridsize - gridsize / 2));
                     localRootNode.attachChild(geomxend);
                 }
 
                 Geometry geomy = new Geometry("Grid", by);
                 geomy.setMaterial(maty);
-                geomy.center().move(new Vector3f(x * gridsize + gridsize / 2, 0, y * gridsize));
+                geomy.center().move(new Vector3f(x * gridsize + gridsize / 2, 0.7f, y * gridsize));
 
                 localRootNode.attachChild(geomy);
 
                 if (x == (int) -gridsize * 5) {
                     Geometry geomyend = geomy.clone();
-                    geomyend.center().move(new Vector3f(x * gridsize - gridsize / 2, 0, y * gridsize));
+                    geomyend.center().move(new Vector3f(x * gridsize - gridsize / 2, 0.7f, y * gridsize));
                     localRootNode.attachChild(geomyend);
                 }
 
                 Geometry geomfloor = new Geometry("Floor", floor);
                 geomfloor.setMaterial(matfloor);
-                geomfloor.center().move(new Vector3f(x * gridsize, 0, y * gridsize));
+                geomfloor.center().move(new Vector3f(x * gridsize, 0f, y * gridsize));
 
                 localRootNode.attachChild(geomfloor);
             }
@@ -273,7 +273,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
             if (gameFinished) {
                 if (gameFinishCountDown <= 0) {
                     cleanup();
-                    //this.stop();
+                    app.stop();
                     return;
                 }
                 gameFinishCountDown -= tpf;
@@ -285,7 +285,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
             //updateLasers(tpf);
 
-            updateEnemy(tpf);
+            updateEntities(tpf);
 
             // Check if it's time to update the model
             if (playNewTurnCountDown <= 0) {
@@ -294,9 +294,6 @@ public class GameScreenState extends BaseAppState implements ScreenController {
                 playNewTurnCountDown = 1f;
             }
             playNewTurnCountDown -= tpf;
-
-            // TODO
-            //updateHealthBars();
 
             // Wait one second
             /*
@@ -309,33 +306,33 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
     }
 
-    private void updateEnemy(float tpf) {
-        // flush all the previous entities.
-        //entities.detachAllChildren();
-
+    private void updateEntities(float tpf) {
         for(GraphEntity entity : game.getEntities()) {
             // Retrieve the 3D representation of the current entity
             if(entityVisualization.containsKey(entity.getType())) {
-                entityVisualization.get(entity.getType()).moveToGoal(tpf, entity);
+                entityVisualization.get(entity.getType()).update(tpf, entity);
             }
         }
 
+        // Remove dead entity by dead Spatial
+        Iterator<VisualizationEntity3D> iterator = entityVisualization.values().iterator();
+        while(iterator.hasNext()) {
+            VisualizationEntity3D entity = iterator.next();
+            if(!entity.hasBeenUpdated()) {
+                entity.kill();
+                iterator.remove();
+            } else {
+                entityVisualization.get(entity.getType()).resetUpdateState();
+            }
+        }
+        /*
         System.out.println("Comparaison between 'graphs'");
         for(Spatial n : entities.getChildren()) {
             System.out.println(n.toString());
         }
         System.out.println("============================");
         game.printCurrentGraph();
-        System.out.println("Fin Comparaison between 'graphs'");
-    }
-
-    private void updateHealthBars() {
-        // update health bars of all entities
-        /*
-        for(Node currentNode : gameEntities.values()) {
-            // TODO : Retrieve the life of the entity
-            //((Quad) ((Geometry) currentNode.getChild("healthbar")).getMesh()).updateGeometry(enemyHealth / 100 * 4, 0.2f);
-        }*/
+        System.out.println("Fin Comparaison between 'graphs'");*/
     }
 
     @Override

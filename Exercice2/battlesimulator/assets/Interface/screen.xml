@@ -23,7 +23,9 @@
             </effect>
             <panel childLayout="horizontal" width="100%" height="23px" align="center">
                 <image id="#icon" width="23px" height="23px" />
-                <control id="#entity-name" name="label" visibleToMouse="true" align="left" textHAlign="left" height="23px" width="*" wrap="true" />
+                <control id="#entity-name" name="label" visibleToMouse="true" align="left" textHAlign="left" height="23px" width="*" wrap="true">
+                    <interact onClick="listBoxItemClicked()" />
+                </control>
             </panel>
             <panel childLayout="horizontal" width="100%" height="10px" align="center" backgroundColor="#f00f">
             </panel>
@@ -65,7 +67,6 @@
             <panel id="panel_middle" childLayout="horizontal" width="60%" height="30%" align="center" valign="bottom">
                 <control id="console" name="nifty-console" lines="10" />
             </panel>
-
         </layer>
 
         <layer id="foreground" childLayout="horizontal">
