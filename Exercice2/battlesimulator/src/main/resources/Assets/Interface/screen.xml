@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+@author: Grégoire Boiron <gregoire.boiron@gmail.com>
+@version: 0.0.1
+-->
+
+<nifty xmlns="http://nifty-gui.lessvoid.com/nifty-gui" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <!-- Your IDE now tells you that one <screen></screen> element is expected here, etc. -->
+    <useStyles filename="nifty-default-styles.xml"/>
+    <useControls filename="nifty-default-controls.xml"/>
+
+    <!-- this defines the control for a single line of text in the chat and player window -->
+    <controlDefinition name="customListBox-line" >
+        <panel childLayout="vertical" width="100%" align="center">
+            <interact onClick="listBoxItemClicked()" />
+            <effect>
+                <onCustom customKey="focus" name="colorBar" post="false" color="#444f" neverStopRendering="true" timeType="infinite" />
+                <onCustom customKey="select" name="colorBar" post="false" color="#444f" neverStopRendering="true" timeType="infinite" />
+                <onCustom customKey="select" name="textColor" post="false" color="#fc0f" neverStopRendering="true" timeType="infinite" />
+                <onHover name="colorBar" color="#444f" post="false" neverStopRendering="true" timeType="infinite" inset="1px"/>
+                <onClick name="focus" targetElement="#parent#parent"/>
+            </effect>
+            <panel childLayout="horizontal" width="100%" height="23px" align="center">
+                <image id="#icon" width="23px" height="23px" />
+                <control id="#entity-name" name="label" visibleToMouse="true" align="left" textHAlign="left" height="23px" width="*" wrap="true">
+                    <interact onClick="listBoxItemClicked()" />
+                </control>
+            </panel>
+        </panel>
+    </controlDefinition>
+
+    <!--              -->
+    <!-- Start Screen -->
+    <!--              -->
+    <!-- NOT YET IMPLEMENTED
+    <screen id="start" controller="com.graygzou.Engine.GameScreenState>
+        <layer id="background" childLayout="center" backgroundColor="#000f">
+            <image filename="Interface/teapot.png"></image>
+        </layer>
+        <layer id="foreground" backgroundColor="#0000" childLayout="vertical">
+            <panel id="panel_top" height="25%" width="75%" align="center" childLayout="center"
+                   backgroundColor="#f008">
+            </panel>
+            <panel id="panel_mid" height="50%" width="75%" align="center" childLayout="center"
+                   backgroundColor="#0f08">
+            </panel>
+            <panel id="panel_bottom" height="25%" width="75%" align="center" childLayout="horizontal"
+                   backgroundColor="#00f8">
+                <panel id="panel_bottom_left" height="50%" width="50%" valign="center" childLayout="center"
+                       backgroundColor="#44f8">
+                </panel>
+                <panel id="panel_bottom_right" height="50%" width="50%" valign="center" childLayout="center"
+                       backgroundColor="#88f8">
+                </panel>
+            </panel>
+        </layer>
+    </screen> -->
+
+    <!--             -->
+    <!-- In game HUD -->
+    <!--             -->
+    <screen id="hud" controller="Engine.GameScreenState">
+        <layer id="background" childLayout="center">
+            <panel id="panel_middle" childLayout="horizontal" width="60%" height="30%" align="center" valign="bottom">
+                <control id="console" name="nifty-console" lines="10" />
+            </panel>
+        </layer>
+
+        <layer id="foreground" childLayout="horizontal">
+            <!-- Panel Team 1 -->
+            <panel id="panel_left" width="20%" height="100%" childLayout="vertical">
+                <panel id="team1_panel" width="100%" height="15%" childLayout="vertical">
+                    <text id="textTeam1" style="nifty-label" height="100%" width="100%" text="Team1" wrap="true" textHAlign="left" textVAlign="center"/>
+                    <control id="listBoxTeam1" name="listBox" width="100%" height="*" vertical="optional" horizontal="off" selection="single" displayItems="15"
+                             viewConverterClass="Engine.ChatBoxViewConverter">
+                        <control name="customListBox-line" controller="de.lessvoid.nifty.controls.listbox.ListBoxItemController" />
+                        <!-- here we tell Nifty what element to display in each line and the controller is necessary if you want to support selections -->
+                    </control>
+                </panel>
+            </panel>
+
+            <!-- spacer -->
+            <panel id="panel_middle" width="60%" height="100%" childLayout="center">
+                <panel id="panel_score" childLayout="horizontal" width="50%" align="center" valign="top" >
+                    <control name="label" text="0" width="20px" backgroundColor="#f00f" /> <!-- Should be set with the team color -->
+                    <text id="text-score" style="nifty-label" height="100%" width="100%" text="Score" wrap="true" textHAlign="center" textVAlign="center"/>
+                    <control name="label" text="0" width="20px" backgroundColor="#00ff" /> <!-- Should be set with the team color -->
+                </panel>
+                <!-- button panel -->
+                <panel id="panel_button" childLayout="horizontal"  width="50%" align="center" valign="bottom" >
+
+                    <control id="playButton" name="button" label="Play">
+                        <interact onClick="clickPlayButton()" />
+                    </control>
+                    <control id="pauseButton" name="button" label="Pause">
+                        <interact onClick="clickPauseButton()" />
+                    </control>
+                    <control id="stopButton" name="button" label="Stop" />
+                </panel>
+            </panel>
+
+            <!-- Panel Team 2 -->
+            <panel id="panel_right" width="20%" height="100%" childLayout="vertical" >
+                <panel id="team2_panel" width="100%" height="15%" childLayout="vertical">
+                    <text id="textTeam2" style="nifty-label" height="100%" width="100%" text="Team2" wrap="true" textHAlign="left" textVAlign="center"/>
+                    <control id="listBoxTeam2" name="listBox" width="100%" height="*" vertical="optional" horizontal="off" selection="single" displayItems="15"
+                             viewConverterClass="Engine.ChatBoxViewConverter">
+                        <control name="customListBox-line" controller="de.lessvoid.nifty.controls.listbox.ListBoxItemController" />
+                        <!-- here we tell Nifty what element to display in each line and the controller is necessary if you want to support selections -->
+                    </control>
+                </panel>
+            </panel>
+        </layer>
+    </screen>
+
+</nifty>

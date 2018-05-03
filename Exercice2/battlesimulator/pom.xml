@@ -1,21 +1,21 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.graygzou</groupId>
-  <artifactId>battle-simulator</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <inceptionYear>2008</inceptionYear>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>battle-simulator</groupId>
+    <artifactId>battle-simulator</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <inceptionYear>2008</inceptionYear>
 
-  <properties>
-      <maven.compiler.source>1.8</maven.compiler.source>
-      <maven.compiler.target>1.8</maven.compiler.target>
-      <encoding>UTF-8</encoding>
-      <!-- Scala -->
-      <scala.version>2.11.8</scala.version>
-      <scala.compat.version>2.11</scala.compat.version>
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+        <!-- Scala -->
+        <scala.version>2.11.8</scala.version>
+        <scala.compat.version>2.11</scala.compat.version>
 
-      <jme3_g>org.jmonkeyengine</jme3_g>
-      <jme3_v>3.2.0-stable</jme3_v>
-  </properties>
+        <jme3_g>org.jmonkeyengine</jme3_g>
+        <jme3_v>3.2.0-stable</jme3_v>
+    </properties>
 
     <repositories>
         <repository>
@@ -25,98 +25,161 @@
     </repositories>
 
     <!-- Test dependencies -->
-  <dependencies>
-      <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
-      <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_2.11</artifactId>
-          <version>2.2.0</version>
-      </dependency>
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>2.2.0</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-graphx -->
-      <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-graphx_2.11</artifactId>
-          <version>2.1.1</version>
-      </dependency>
-      
-      <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
-      <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-sql_2.11</artifactId>
-          <version>2.1.1</version>
-      </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-graphx -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.11</artifactId>
+            <version>2.1.1</version>
+        </dependency>
 
-      <dependency>
-          <groupId>${jme3_g}</groupId>
-          <artifactId>jme3-core</artifactId>
-          <version>${jme3_v}</version>
-      </dependency>
-      <dependency>
-          <groupId>${jme3_g}</groupId>
-          <artifactId>jme3-desktop</artifactId>
-          <version>${jme3_v}</version>
-          <scope>runtime</scope>
-      </dependency>
-      <dependency>
-          <groupId>${jme3_g}</groupId>
-          <artifactId>jme3-lwjgl</artifactId>
-          <version>${jme3_v}</version>
-      </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.11</artifactId>
+            <version>2.1.1</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/net.sf.sociaal/jME3-testdata -->
-      <dependency>
-          <groupId>net.sf.sociaal</groupId>
-          <artifactId>jME3-testdata</artifactId>
-          <version>3.0.0.20130526</version>
-      </dependency>
+        <dependency>
+            <groupId>${jme3_g}</groupId>
+            <artifactId>jme3-core</artifactId>
+            <version>${jme3_v}</version>
+        </dependency>
+        <dependency>
+            <groupId>${jme3_g}</groupId>
+            <artifactId>jme3-desktop</artifactId>
+            <version>${jme3_v}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${jme3_g}</groupId>
+            <artifactId>jme3-lwjgl</artifactId>
+            <version>${jme3_v}</version>
+        </dependency>
 
-      <!-- NIFTY : User Interface -->
-      <dependency>
-          <groupId>com.github.nifty-gui</groupId>
-          <artifactId>nifty</artifactId>
-          <version>1.4.2</version>
-      </dependency>
+        <!-- https://mvnrepository.com/artifact/net.sf.sociaal/jME3-testdata -->
+        <dependency>
+            <groupId>net.sf.sociaal</groupId>
+            <artifactId>jME3-testdata</artifactId>
+            <version>3.0.0.20130526</version>
+        </dependency>
 
-      <!-- https://mvnrepository.com/artifact/org.jmonkeyengine/jme3-niftygui -->
-      <dependency>
-          <groupId>org.jmonkeyengine</groupId>
-          <artifactId>jme3-niftygui</artifactId>
-          <version>3.2.1-stable</version>
-      </dependency>
+        <!-- NIFTY : User Interface -->
+        <dependency>
+            <groupId>com.github.nifty-gui</groupId>
+            <artifactId>nifty</artifactId>
+            <version>1.4.2</version>
+        </dependency>
 
-      <!-- Physics dependencies -->
-      <dependency>
-          <groupId>org.jmonkeyengine</groupId>
-          <artifactId>jme3-bullet-native</artifactId>
-          <version>3.2.1-stable</version>
-      </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jmonkeyengine/jme3-niftygui -->
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-niftygui</artifactId>
+            <version>3.2.1-stable</version>
+        </dependency>
 
-      <dependency>
-          <groupId>org.jmonkeyengine</groupId>
-          <artifactId>jme3-bullet</artifactId>
-          <version>3.2.1-stable</version>
-      </dependency>
+        <!-- Physics dependencies -->
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-bullet-native</artifactId>
+            <version>3.2.1-stable</version>
+        </dependency>
 
-      <dependency>
-          <groupId>org.jmonkeyengine</groupId>
-          <artifactId>jme3-jbullet</artifactId>
-          <version>3.2.1-stable</version>
-      </dependency>
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-bullet</artifactId>
+            <version>3.2.1-stable</version>
+        </dependency>
 
-      <!-- Others dependencies -->
-      <dependency>
-          <groupId>org.jmonkeyengine</groupId>
-          <artifactId>jme3-plugins</artifactId>
-          <version>3.2.1-stable</version>
-      </dependency>
+        <!-- Others dependencies -->
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-plugins</artifactId>
+            <version>3.2.1-stable</version>
+        </dependency>
 
-      <dependency>
-          <groupId>org.jmonkeyengine</groupId>
-          <artifactId>jme3-effects</artifactId>
-          <version>3.2.1-stable</version>
-      </dependency>
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-effects</artifactId>
+            <version>3.2.1-stable</version>
+        </dependency>
 
-  </dependencies>
+    </dependencies>
+
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.0.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

@@ -4,7 +4,7 @@ package intermediate;
  * and open the template in the editor.
  */
 
-import com.graygzou.Engine.ExamplesGUI.AWTLoader;
+import Engine.ExamplesGUI.AWTLoader;
 import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
