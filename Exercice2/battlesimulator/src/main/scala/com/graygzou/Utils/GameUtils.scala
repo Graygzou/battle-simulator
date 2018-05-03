@@ -28,7 +28,7 @@ object GameUtils {
   }
 
   // Others stuffs
-  def retrievePosition(str: String) : Vector3f = {
+  def makeVector3f(str: String) : Vector3f = {
     var position = new Vector3f(0,0,0)
     val coordinates : Array[Float] = GameUtils.makeArray(str)
     if(coordinates.length == 3) {

@@ -7,6 +7,7 @@ package com.graygzou.Engine;
 
 import com.graygzou.Cluster.Team;
 import com.jme3.app.SimpleApplication;
+import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.AnalogListener;
@@ -139,6 +140,14 @@ public class Engine3D extends SimpleApplication implements AnalogListener, Actio
         if (name.equals("previousEntity") && keyPressed) {
             gameScreenState.previousEntityCameraFocus();
         }
+    }
+
+    public BitmapFont getGuiFont() {
+        return guiFont;
+    }
+
+    public void setGuiFont(String newFont) {
+        guiFont = assetManager.loadFont(newFont);
     }
 
     public void printFinalResult(int result, int numberOfTurn) {

@@ -54,17 +54,17 @@ public class HelloMaterial extends SimpleApplication {
         Geometry sphereGeo = new Geometry("Shiny rock", sphereMesh);
         sphereMesh.setTextureMode(Sphere.TextureMode.Projected); // better quality on spheres
         TangentBinormalGenerator.generate(sphereMesh);           // for lighting effect
-        /*Material sphereMat = new Material(assetManager,
+        Material sphereMat = new Material(assetManager,
                 "Common/MatDefs/Light/Lighting.j3md");
         sphereMat.setTexture("DiffuseMap",
                 assetManager.loadTexture("Textures/Terrain/Pond/Pond.jpg"));
         sphereMat.setTexture("NormalMap",
                 assetManager.loadTexture("Textures/Terrain/Pond/Pond_normal.png"));
         sphereMat.setBoolean("UseMaterialColors",true);
-        sphereMat.setColor("Diffuse",ColorRGBA.White);
-        sphereMat.setColor("Specular",ColorRGBA.White);
+        sphereMat.setColor("Diffuse",ColorRGBA.Blue);
+        sphereMat.setColor("Specular",ColorRGBA.Red);
         sphereMat.setFloat("Shininess", 64f);  // [0,128]
-        sphereGeo.setMaterial(sphereMat);*/
+        sphereGeo.setMaterial(sphereMat);
         sphereGeo.setMaterial((Material) assetManager.loadMaterial(
                 "Materials/MyCustomMaterial.j3m"));
         sphereGeo.setLocalTranslation(0,2,-2); // Move it a bit

@@ -65,11 +65,13 @@ class GraphEntity(args: Array[String]) extends Serializable {
   var meleeMode = 0
   var rangedMode = 0
 
-  private var modelPath = ""
+  protected var modelPath = ""
+  protected var texturePath = ""
+  protected var ownScale = Vector3f.ZERO
 
   // no arguments constructor.
   def this() {
-    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0","0","",""))
+    this(Array("1","dummy","0","0","0","0","0","0","0","0","0","(0/0/0)","0","0","0","0","0","","","(1/1/1)"))
   }
 
   // Function that initialize class members
@@ -91,7 +93,7 @@ class GraphEntity(args: Array[String]) extends Serializable {
 
     ownRegeneration = args(10).toFloat
     // Special case for position
-    currentPosition = GameUtils.retrievePosition(args(11))
+    currentPosition = GameUtils.makeVector3f(args(11))
     ownMaxSpeed = args(12).toFloat
     currentSpeed = args(12).toFloat
     ownFlyParams = new Fly(FlyQuality(args(13).toInt))
@@ -99,8 +101,11 @@ class GraphEntity(args: Array[String]) extends Serializable {
     currentFly = args(14).toFloat
     ownHeal = args(15).toFloat
     ownHealRange = args(16).toFloat
-    // 3D
     modelPath = args(17)
+    texturePath = args(18)
+    println(args(17))
+    println(args(18))
+    ownScale = GameUtils.makeVector3f(args(19))
 
     // if no range attack, replace stats with melee (or we should rewrite AI)
     if (ownRangedAttackRange == 0){
@@ -141,10 +146,13 @@ class GraphEntity(args: Array[String]) extends Serializable {
   def isFlying: Boolean = flying
   def getHeal: Float = ownHeal
   def getHealRange: Float = ownHealRange
+  def getModelPath: String = modelPath
+  def getScale: Vector3f = ownScale
+  def getTexturePath: String = texturePath
 
   def setCurrentPosition(newPosition: Vector3f) = currentPosition = newPosition
-
   def setTeamColor(color: ColorRGBA) = teamColor = color
+  def setModelPath(path: String) = modelPath = path
 
   def hasHeal: Boolean = ownHeal > 0
 
@@ -232,7 +240,7 @@ class GraphEntity(args: Array[String]) extends Serializable {
     (ownTeam.id + 1) + "," + ownType + "," + ownMaxHealth + "," + ownArmor + "," + ownMeleeAttackDamage + "," + ownMeleeAttackRange +
       "," + GameUtils.makeString(ownMeleeAttackPrecision) + "," + ownRangedAttackDamage + "," + ownRangedAttackRange + "," +
       GameUtils.makeString(ownRangedAttackPrecision) + "," + ownRegeneration + "," + GameUtils.makeString(currentPosition) + "," + ownMaxSpeed + "," +
-      ownFlyParams.maneuverability.id + "," + ownMaxFly + "," + ownHeal + "," + ownHealRange + "," + modelPath
+      ownFlyParams.maneuverability.id + "," + ownMaxFly + "," + ownHeal + "," + ownHealRange + "," + modelPath + "," + texturePath + "," + GameUtils.makeString(ownScale)
   }
 
   override def toString: String =

@@ -8,6 +8,7 @@ import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
 import com.jme3.input.ChaseCamera;
+import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -40,7 +41,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
     private boolean gameFinished = false;
     private float gameFinishCountDown = 5f;
-    private float playNewTurnCountDown = 1f; // Play a turn each two seconds
+    private float playNewTurnCountDown = 2f; // Play a turn each two seconds
     private final int floorsize = 40;
 
     private Node localRootNode = new Node("Start Screen RootNode");
@@ -63,7 +64,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
 
     private int currentEntityIdFocused = 0;
 
-    private ChaseCamera camera;
+    public static ChaseCamera camera;
 
     public GameScreenState(Engine3D engine3D) {
         game = new BattleSimulationCluster("Fight1", "local[1]");
@@ -105,7 +106,9 @@ public class GameScreenState extends BaseAppState implements ScreenController {
         ((SimpleApplication) app).getGuiNode().attachChild(localGuiNode);
         ((SimpleApplication) app).getViewPort().setBackgroundColor(backgroundColor);
 
-        /** init the screen */
+        DirectionalLight dl = new DirectionalLight();
+        dl.setDirection(new Vector3f(-0.1f, -1f, -1).normalizeLocal());
+        localRootNode.addLight(dl);
 
         this.mat_default = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
 
@@ -289,7 +292,7 @@ public class GameScreenState extends BaseAppState implements ScreenController {
             if (playNewTurnCountDown <= 0) {
                 System.out.println("Turn n°" + game.getCurrentTurnNumber());
                 game.playOneTurn(tpf);
-                playNewTurnCountDown = 1f;
+                playNewTurnCountDown = 2f;
             }
             playNewTurnCountDown -= tpf;
 
