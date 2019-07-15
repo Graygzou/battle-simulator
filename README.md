@@ -1,4 +1,4 @@
-# Battle-Simulation
+# Battle-Simulation [![Website](https://img.shields.io/website/https/graygzou.github.io/Battle-Simulator.svg)](https://graygzou.github.io/Battle-Simulator/)
 
 Battle simulator made with the game engine [JMonkey](http://jmonkeyengine.org/), using a graph as model. Developed for class [*Distributed Databases* **(8INF803)**](http://cours.uqac.ca/8INF803) at [UQAC](https://uqac.ca) (QC, CA).
 
